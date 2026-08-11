@@ -8,6 +8,9 @@ or remote service is introduced.
 Continuing from another computer or a new AI conversation? Start with
 [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md), which records the active branch,
 current implementation, constraints, commands and next recommended milestone.
+Codex automatically reads the repository's `AGENTS.md`; the OSRS art-direction
+skill is also committed under `.agents/skills`, so no chat transcript or manual
+skill installation is required after cloning.
 
 ## Current MVP
 

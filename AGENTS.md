@@ -2,6 +2,35 @@
 
 Runehold follows the official RuneLite example-plugin conventions.
 
+## Mandatory startup sequence
+
+This repository is the complete handoff between computers and Codex tasks. Do
+not depend on a previous chat for context. At the beginning of every new task,
+before changing files:
+
+1. Read this file and completely read `PROJECT_CONTEXT.md`.
+2. Read `docs/specs/runehold-mvp.md`,
+   `docs/specs/runehold-village-builder.md`,
+   `docs/design/runehold-village-art-direction.md` and `tasks/todo.md`.
+3. Inspect `git status --short --branch`, the current branch and recent commits.
+   The handoff branch named in `PROJECT_CONTEXT.md` is the source of truth. On a
+   clean fresh clone, switch to it and run `git pull --ff-only`. Never discard or
+   overwrite uncommitted user work to switch branches.
+4. Confirm a supported JDK is active, then run `./gradlew test` and
+   `./gradlew build` (`.\gradlew.bat` on Windows) before implementation.
+5. Summarize the current state, remaining work and verification result. If the
+   user asked to continue without naming a feature, start the recommended next
+   milestone from `PROJECT_CONTEXT.md` incrementally, with tests.
+
+The repository-scoped `$osrs-2007-art-direction` skill lives in
+`.agents/skills/osrs-2007-art-direction` and must be used for every visual, UI,
+sprite, icon, asset or art-direction change. Follow all references required by
+that skill. No separate installation or copying of the skill is necessary after
+cloning this repository.
+
+Use branches named `feature/<description>`, `fix/<description>` or
+`docs/<description>`. Never put `codex` in a branch name.
+
 ## Build and dependencies
 
 - Keep all source compatible with Java 11.
@@ -41,5 +70,8 @@ Runehold follows the official RuneLite example-plugin conventions.
 - Follow red-green-refactor for behavior changes.
 - Keep domain tests independent of RuneLite and Swing.
 - Run focused tests, then the full suite and build after each slice.
+- Review the staged diff and check for secrets before every commit.
+- Commit successful increments with a descriptive conventional commit and push
+  the active feature branch when the user asks to publish the work.
 - Only the user may perform the final logged-in RuneLite test. Do not automate or
   interact with RuneScape on the user's behalf.

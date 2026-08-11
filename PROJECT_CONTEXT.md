@@ -6,6 +6,30 @@ This file is the handoff document for continuing Runehold from another
 computer or a new AI conversation. Read it together with `AGENTS.md` before
 changing the project.
 
+## Automatic Codex handoff
+
+No previous conversation or long bootstrap prompt is required. When the cloned
+repository root is opened as the Codex workspace, Codex automatically reads the
+root `AGENTS.md`. That file requires the agent to read this context, inspect the
+handoff branch, run the baseline verification and continue from the recommended
+milestone.
+
+The custom OSRS art-direction skill is committed at
+`.agents/skills/osrs-2007-art-direction`, the repository-scoped discovery path.
+It is therefore available after cloning without copying it into the user's
+profile. For visual work, invoke or allow Codex to invoke
+`$osrs-2007-art-direction`.
+
+On a fresh computer:
+
+1. Install Git, Codex Desktop and Temurin JDK 21.
+2. Clone the repository and switch to the handoff branch with the commands
+   below.
+3. Open the cloned `runehold` directory as the Codex workspace.
+4. Start a task with: `Continue le développement de Runehold.`
+
+Codex must then perform the startup sequence in `AGENTS.md` before editing.
+
 ## Repository and active branch
 
 - GitHub: <https://github.com/hakimbalestrieri/runehold>
@@ -77,7 +101,8 @@ the local interaction is proven.
 - `docs/specs/runehold-village-builder.md`: larger village-builder direction.
 - `docs/design/runehold-village-art-direction.md`: active visual target.
 - `THIRD_PARTY_NOTICES.md`: asset provenance and Jagex attribution.
-- `skills/osrs-2007-art-direction`: reusable OSRS visual review workflow.
+- `.agents/skills/osrs-2007-art-direction`: auto-discovered reusable OSRS visual
+  review workflow.
 
 ## Non-negotiable RuneLite constraints
 
@@ -113,15 +138,14 @@ recommended local runtime because JDK 25 cannot currently run this wrapper.
 Only the user may log in and test RuneScape interactions. Do not automate the
 game client. Follow the manual checklist after automated checks pass.
 
-## Prompt for a new Codex conversation
+## Starting a new Codex task
 
-Copy this prompt into the new task and append the feature to implement:
+The minimum message is sufficient because `AGENTS.md` contains the mandatory
+bootstrap sequence:
 
-> Open and completely read `AGENTS.md`, `PROJECT_CONTEXT.md`,
-> `docs/specs/runehold-mvp.md`, `docs/specs/runehold-village-builder.md`,
-> `docs/design/runehold-village-art-direction.md` and `tasks/todo.md`. Inspect
-> the current Git branch and run the existing tests before changing anything.
-> Continue Runehold from `feature/village-builder`, preserving the current
-> Plugin Hub compliance constraints and OSRS 2007 art direction. Implement the
-> next change incrementally with tests, then commit and push it. The feature I
-> want next is: [describe the next feature here].
+> Continue le développement de Runehold.
+
+To select a particular increment, append it to that sentence. If no increment
+is specified, continue with the local village canvas and placement model: a
+bounded OSRS-style village area, deterministic grid placement, building
+selection and movement, all offline and covered by tests.

@@ -92,4 +92,4 @@ sans extraction du cache Jagex.
 Une image est rejetée si elle contient du rendu HD, PBR, lumière douce, dégradé,
 glow, géométrie lissée, carte arrondie, grande barre mobile, outline cartoon
 uniforme ou asset reconnaissable copié. Les règles complètes et le prompt canonique
-sont dans `skills/osrs-2007-art-direction/`.
+sont dans `.agents/skills/osrs-2007-art-direction/`.
