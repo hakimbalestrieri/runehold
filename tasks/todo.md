@@ -33,9 +33,9 @@ Status: plan ready for review; implementation not started.
   - [x] Original toolbar icon.
 - [x] Checkpoint: run plugin tests and full build.
 - [ ] Task 7: document and validate the playable slice.
-  - [ ] README and privacy/non-feature boundaries.
-  - [ ] Manual in-game test checklist.
-  - [ ] Full tests, build, diff check, and code review.
+  - [x] README and privacy/non-feature boundaries.
+  - [x] Manual in-game test checklist.
+  - [x] Full tests, build, diff check, and code review.
   - [ ] User confirms the RuneLite launcher test.
 - [ ] Decide final author string before Plugin Hub submission.
 - [ ] Keep multiplayer/raids/backend work in a separate post-MVP specification.
