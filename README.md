@@ -5,6 +5,10 @@ the plugin is observing a skill becomes mana, and mana grows a small persistent
 village. The first release validates the progression loop before any multiplayer
 or remote service is introduced.
 
+Continuing from another computer or a new AI conversation? Start with
+[PROJECT_CONTEXT.md](PROJECT_CONTEXT.md), which records the active branch,
+current implementation, constraints, commands and next recommended milestone.
+
 ## Current MVP
 
 - A fresh village starts with 250 mana and a level-1 Town Hall.

@@ -1,6 +1,7 @@
 # Runehold MVP — Task Checklist
 
-Status: plan ready for review; implementation not started.
+Status: MVP and OSRS panel implemented; automated validation passed, awaiting
+the user's manual RuneLite launcher confirmation.
 
 - [x] Define and approve `docs/specs/runehold-mvp.md`.
 - [x] Approve `tasks/plan.md`.
