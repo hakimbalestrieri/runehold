@@ -183,6 +183,15 @@ public final class VillageState
 		manaEarnedToday = 0;
 	}
 
+	public void rollEarningDayIfNeeded(LocalDate date)
+	{
+		Objects.requireNonNull(date, "date");
+		if (!date.equals(manaEarningDate))
+		{
+			beginEarningDay(date);
+		}
+	}
+
 	public void clearXpBaselines()
 	{
 		xpBaselines.clear();

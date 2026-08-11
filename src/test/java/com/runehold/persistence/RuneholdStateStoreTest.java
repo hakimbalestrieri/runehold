@@ -3,6 +3,7 @@ package com.runehold.persistence;
 import com.google.gson.Gson;
 import com.runehold.domain.BuildingCatalog;
 import com.runehold.domain.BuildingType;
+import com.runehold.domain.ManaLedger;
 import com.runehold.domain.Village;
 import com.runehold.domain.VillageState;
 import java.time.LocalDate;
@@ -58,6 +59,23 @@ public class RuneholdStateStoreTest
 		assertEquals("state", configuration.lastKey);
 		assertEquals(150L, restored.getMana());
 		assertEquals(1, restored.levelOf(BuildingType.MANA_WELL));
+	}
+
+	@Test
+	public void loadingOnANewDayResetsOnlyDailyProgress()
+	{
+		configuration.profileKey = "profile-1";
+		VillageState state = VillageState.fresh(TODAY);
+		ManaLedger ledger = new ManaLedger(state, () -> TODAY);
+		ledger.recordXp("MINING", 1_000);
+		ledger.recordXp("MINING", 1_500);
+		store.save(state);
+
+		VillageState restored = store.load(TODAY.plusDays(1));
+
+		assertEquals(255L, restored.getMana());
+		assertEquals(0, restored.getManaEarnedToday());
+		assertEquals(TODAY.plusDays(1), restored.getManaEarningDate());
 	}
 
 	private static final class FakeProfileConfiguration

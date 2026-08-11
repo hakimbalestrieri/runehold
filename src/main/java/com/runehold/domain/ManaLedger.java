@@ -28,10 +28,7 @@ public final class ManaLedger
 		}
 
 		LocalDate today = Objects.requireNonNull(currentDate.get(), "currentDate result");
-		if (!today.equals(state.getManaEarningDate()))
-		{
-			state.beginEarningDay(today);
-		}
+		state.rollEarningDayIfNeeded(today);
 
 		Integer previousXp = state.getXpBaseline(normalizedSkillKey);
 		if (previousXp == null)

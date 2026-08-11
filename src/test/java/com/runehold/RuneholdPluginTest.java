@@ -8,6 +8,7 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+@SuppressWarnings("unchecked")
 public class RuneholdPluginTest
 {
 	@Test
@@ -17,6 +18,12 @@ public class RuneholdPluginTest
 
 		assertNotNull(descriptor);
 		assertEquals("Runehold", descriptor.name());
+	}
+
+	@Test
+	public void pluginCanBeRegisteredAsBuiltin() throws Exception
+	{
+		ExternalPluginManager.loadBuiltin(RuneholdPlugin.class);
 	}
 
 	public static void main(String[] args) throws Exception

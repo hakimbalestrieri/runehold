@@ -26,12 +26,12 @@ Status: plan ready for review; implementation not started.
   - [x] Mana and daily-cap header.
   - [x] Building rows and action states.
   - [x] Keyboard/accessibility and EDT behavior.
-- [ ] Task 6: integrate lifecycle and `StatChanged` events.
-  - [ ] Toolbar navigation and clean teardown.
-  - [ ] XP event adapter and session baseline reset.
-  - [ ] Save after mana awards and upgrades.
-  - [ ] Original toolbar icon.
-- [ ] Checkpoint: run plugin tests and full build.
+- [x] Task 6: integrate lifecycle and `StatChanged` events.
+  - [x] Toolbar navigation and clean teardown.
+  - [x] XP event adapter and session baseline reset.
+  - [x] Save after mana awards and upgrades.
+  - [x] Original toolbar icon.
+- [x] Checkpoint: run plugin tests and full build.
 - [ ] Task 7: document and validate the playable slice.
   - [ ] README and privacy/non-feature boundaries.
   - [ ] Manual in-game test checklist.

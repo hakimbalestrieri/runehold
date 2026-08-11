@@ -31,7 +31,9 @@ public final class RuneholdStateStore
 			return VillageState.fresh(today);
 		}
 
-		return codec.decode(configuration.get(CONFIG_GROUP, STATE_KEY), today);
+		VillageState state = codec.decode(configuration.get(CONFIG_GROUP, STATE_KEY), today);
+		state.rollEarningDayIfNeeded(today);
+		return state;
 	}
 
 	public boolean save(VillageState state)
