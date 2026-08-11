@@ -1,0 +1,41 @@
+# Runehold MVP — Task Checklist
+
+Status: plan ready for review; implementation not started.
+
+- [x] Define and approve `docs/specs/runehold-mvp.md`.
+- [x] Approve `tasks/plan.md`.
+- [x] Task 1: scaffold the official Java 11 RuneLite plugin project.
+  - [x] Add Gradle build, settings, wrapper, metadata, and ignore rules.
+  - [x] Add project constraints and test launcher.
+  - [x] Make smoke test and full build pass.
+- [ ] Task 2: implement XP-to-mana rules with tests first.
+  - [ ] Baseline behavior and invalid deltas.
+  - [ ] Conversion and remainder carry.
+  - [ ] Daily cap and date rollover.
+  - [ ] Initial village balance.
+- [ ] Task 3: implement village upgrades with tests first.
+  - [ ] Four-building catalog.
+  - [ ] Unlocks, costs, and maximum levels.
+  - [ ] Atomic success/failure transactions.
+- [ ] Checkpoint: run all pure-domain tests.
+- [ ] Task 4: implement versioned profile persistence.
+  - [ ] JSON round-trip.
+  - [ ] Corrupt and unsupported schema recovery.
+  - [ ] Missing-profile behavior.
+- [ ] Task 5: implement the RuneLite side panel.
+  - [ ] Mana and daily-cap header.
+  - [ ] Building rows and action states.
+  - [ ] Keyboard/accessibility and EDT behavior.
+- [ ] Task 6: integrate lifecycle and `StatChanged` events.
+  - [ ] Toolbar navigation and clean teardown.
+  - [ ] XP event adapter and session baseline reset.
+  - [ ] Save after mana awards and upgrades.
+  - [ ] Original toolbar icon.
+- [ ] Checkpoint: run plugin tests and full build.
+- [ ] Task 7: document and validate the playable slice.
+  - [ ] README and privacy/non-feature boundaries.
+  - [ ] Manual in-game test checklist.
+  - [ ] Full tests, build, diff check, and code review.
+  - [ ] User confirms the RuneLite launcher test.
+- [ ] Decide final author string before Plugin Hub submission.
+- [ ] Keep multiplayer/raids/backend work in a separate post-MVP specification.

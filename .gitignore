@@ -1,0 +1,12 @@
+.gradle/
+.gradle-user-home/
+.tooling/
+build/
+out/
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.log
+hs_err_pid*
