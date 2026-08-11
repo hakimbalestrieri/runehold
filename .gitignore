@@ -1,6 +1,7 @@
 .gradle/
 .gradle-user-home/
 .tooling/
+.tmp/
 build/
 out/
 .idea/

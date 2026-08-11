@@ -8,8 +8,10 @@ import com.runehold.domain.Village;
 import com.runehold.domain.VillageState;
 import com.runehold.persistence.RuneholdStateCodec;
 import com.runehold.persistence.RuneholdStateStore;
+import com.runehold.ui.RuneholdAssets;
 import com.runehold.ui.RuneholdController;
 import com.runehold.ui.RuneholdPanel;
+import com.runehold.ui.RuneLiteRuneholdAssets;
 import java.awt.image.BufferedImage;
 import java.time.LocalDate;
 import java.util.Objects;
@@ -21,6 +23,7 @@ import net.runelite.api.events.StatChanged;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.game.ItemManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.ClientToolbar;
@@ -46,6 +49,9 @@ public class RuneholdPlugin extends Plugin
 	@Inject
 	private ClientThread clientThread;
 
+	@Inject
+	private ItemManager itemManager;
+
 	private BuildingCatalog catalog;
 	private RuneholdStateStore stateStore;
 	private VillageState state;
@@ -53,11 +59,13 @@ public class RuneholdPlugin extends Plugin
 	private RuneholdController controller;
 	private RuneholdPanel panel;
 	private NavigationButton navigationButton;
+	private RuneholdAssets uiAssets;
 	private String activeProfileKey;
 
 	@Override
 	protected void startUp()
 	{
+		uiAssets = new RuneLiteRuneholdAssets(itemManager);
 		catalog = new BuildingCatalog();
 		stateStore = new RuneholdStateStore(
 			configManager,
@@ -86,6 +94,7 @@ public class RuneholdPlugin extends Plugin
 		state = null;
 		stateStore = null;
 		catalog = null;
+		uiAssets = null;
 		log.debug("Runehold stopped");
 	}
 
@@ -145,7 +154,8 @@ public class RuneholdPlugin extends Plugin
 			stateStore::save);
 		RuneholdPanel loadedPanel = new RuneholdPanel(
 			loadedController.getViewModel(),
-			type -> requestUpgrade(loadedController, type));
+			type -> requestUpgrade(loadedController, type),
+			uiAssets);
 		controller = loadedController;
 		panel = loadedPanel;
 		replaceNavigation();

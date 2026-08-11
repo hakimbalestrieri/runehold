@@ -7,11 +7,16 @@ import com.runehold.domain.Village;
 import com.runehold.domain.VillageState;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Font;
 import java.time.LocalDate;
+import java.util.EnumMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
+import net.runelite.api.gameval.ItemID;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -109,10 +114,51 @@ public class RuneholdViewModelTest
 
 		SwingUtilities.invokeAndWait(() -> panel.set(new RuneholdPanel(
 			controller.getViewModel(),
-			ignored -> { })));
+			ignored -> { },
+			new RecordingRuneholdAssets())));
 
 		assertEquals(4, countButtons(panel.get()));
 		assertEquals(2, countEnabledButtons(panel.get()));
+	}
+
+	@Test
+	public void runtimeBuildingIconsUseRecognizableOsrsItems()
+	{
+		assertEquals(ItemID.SKILLCAPE_CONSTRUCTION,
+			RuneLiteRuneholdAssets.itemIdFor(BuildingType.TOWN_HALL));
+		assertEquals(ItemID.WATERRUNE,
+			RuneLiteRuneholdAssets.itemIdFor(BuildingType.MANA_WELL));
+		assertEquals(ItemID.BRONZE_SWORD,
+			RuneLiteRuneholdAssets.itemIdFor(BuildingType.BARRACKS));
+		assertEquals(ItemID.HAMMER,
+			RuneLiteRuneholdAssets.itemIdFor(BuildingType.WORKSHOP));
+	}
+
+	@Test
+	public void panelAppliesOsrsFontsAndRuntimeIcons() throws Exception
+	{
+		RuneholdController controller = new RuneholdController(
+			state,
+			village,
+			catalog,
+			ignored -> { });
+		RecordingRuneholdAssets assets = new RecordingRuneholdAssets();
+		AtomicReference<RuneholdPanel> panel = new AtomicReference<>();
+
+		SwingUtilities.invokeAndWait(() -> panel.set(new RuneholdPanel(
+			controller.getViewModel(),
+			ignored -> { },
+			assets)));
+
+		JLabel title = findLabel(panel.get(), "RUNEHOLD");
+		assertEquals(Font.MONOSPACED, title.getFont().getFamily());
+		assertEquals(Font.BOLD, title.getFont().getStyle());
+		assertEquals(1, assets.manaIconCount);
+		assertEquals(4, assets.upgradeIconCount);
+		for (BuildingType type : BuildingType.values())
+		{
+			assertEquals(Integer.valueOf(1), assets.buildingIconCounts.get(type));
+		}
 	}
 
 	@Test
@@ -133,7 +179,7 @@ public class RuneholdViewModelTest
 			{
 				requested.set(type);
 				requestCount.incrementAndGet();
-			}));
+			}, new RecordingRuneholdAssets()));
 			JButton buildButton = findButton(panel.get(), "Build (100)");
 			buildButton.doClick();
 			buildButton.doClick();
@@ -190,5 +236,63 @@ public class RuneholdViewModelTest
 			}
 		}
 		return null;
+	}
+
+	private static JLabel findLabel(Container container, String text)
+	{
+		for (Component component : container.getComponents())
+		{
+			if (component instanceof JLabel && text.equals(((JLabel) component).getText()))
+			{
+				return (JLabel) component;
+			}
+			if (component instanceof Container)
+			{
+				JLabel nested = findLabel((Container) component, text);
+				if (nested != null)
+				{
+					return nested;
+				}
+			}
+		}
+		return null;
+	}
+
+	private static final class RecordingRuneholdAssets implements RuneholdAssets
+	{
+		private int manaIconCount;
+		private int upgradeIconCount;
+		private final Map<BuildingType, Integer> buildingIconCounts =
+			new EnumMap<>(BuildingType.class);
+
+		@Override
+		public Font regularFont(float size)
+		{
+			return new Font(Font.MONOSPACED, Font.PLAIN, Math.round(size));
+		}
+
+		@Override
+		public Font boldFont(float size)
+		{
+			return new Font(Font.MONOSPACED, Font.BOLD, Math.round(size));
+		}
+
+		@Override
+		public void addManaIcon(JLabel label)
+		{
+			manaIconCount++;
+		}
+
+		@Override
+		public void addBuildingIcon(BuildingType type, JLabel label)
+		{
+			buildingIconCounts.merge(type, 1, Integer::sum);
+		}
+
+		@Override
+		public void addUpgradeIcon(JButton button)
+		{
+			upgradeIconCount++;
+		}
 	}
 }

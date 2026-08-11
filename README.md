@@ -20,6 +20,19 @@ or remote service is introduced.
 Runehold does not consume OSRS items. Bank withdrawals, trades, Grand Exchange
 purchases, inventory movement, and existing wealth award no mana.
 
+## OSRS visual identity
+
+The current panel uses RuneLite's game-native regular/bold fonts everywhere and
+loads recognizable OSRS item sprites at runtime for mana, buildings, and upgrade
+actions. These images come from the user's local game cache through RuneLite's
+`ItemManager`; extracted game textures and font files are not packaged in the
+plugin JAR.
+
+The dedicated village will follow the same boundary: RuneLite runtime assets may
+decorate HUD controls, while terrain, buildings, scaffolding, characters, and
+the Runehold logo remain original project artwork. See
+[the complete asset inventory and Jagex attribution](THIRD_PARTY_NOTICES.md).
+
 ## Building progression
 
 | Building | Levels | Upgrade costs by target level | Town Hall requirement |
@@ -116,3 +129,6 @@ the OSRS economy.
 ## License
 
 BSD 2-Clause. See [LICENSE](LICENSE).
+
+The code licence does not grant rights to Jagex intellectual property displayed
+at runtime. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

@@ -2,7 +2,6 @@ package com.runehold.ui;
 
 import com.runehold.domain.BuildingType;
 import java.awt.BorderLayout;
-import java.awt.Font;
 import java.util.Objects;
 import java.util.function.Consumer;
 import javax.swing.BorderFactory;
@@ -17,13 +16,16 @@ import net.runelite.client.ui.PluginPanel;
 public final class RuneholdPanel extends PluginPanel
 {
 	private final Consumer<BuildingType> onUpgrade;
+	private final RuneholdAssets assets;
 	private final JPanel content = new JPanel();
 
 	public RuneholdPanel(
 		RuneholdViewModel initialViewModel,
-		Consumer<BuildingType> onUpgrade)
+		Consumer<BuildingType> onUpgrade,
+		RuneholdAssets assets)
 	{
 		this.onUpgrade = Objects.requireNonNull(onUpgrade, "onUpgrade");
+		this.assets = Objects.requireNonNull(assets, "assets");
 		setLayout(new BorderLayout());
 		content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
 		content.setBackground(ColorScheme.DARK_GRAY_COLOR);
@@ -47,7 +49,7 @@ public final class RuneholdPanel extends PluginPanel
 
 		for (RuneholdViewModel.BuildingView building : viewModel.getBuildings())
 		{
-			content.add(new BuildingRow(building, onUpgrade));
+			content.add(new BuildingRow(building, onUpgrade, assets));
 			content.add(Box.createVerticalStrut(8));
 		}
 
@@ -55,7 +57,7 @@ public final class RuneholdPanel extends PluginPanel
 		content.repaint();
 	}
 
-	private static JPanel createHeader(RuneholdViewModel viewModel)
+	private JPanel createHeader(RuneholdViewModel viewModel)
 	{
 		JPanel header = new JPanel();
 		header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
@@ -63,12 +65,15 @@ public final class RuneholdPanel extends PluginPanel
 		header.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
 
 		JLabel title = new JLabel("RUNEHOLD");
-		title.setFont(title.getFont().deriveFont(Font.BOLD, 17f));
+		title.setFont(assets.boldFont(20f));
 		title.setForeground(ColorScheme.BRAND_ORANGE);
 		JLabel mana = new JLabel(viewModel.getManaText());
-		mana.setFont(mana.getFont().deriveFont(Font.BOLD, 15f));
+		mana.setFont(assets.boldFont(16f));
 		mana.setForeground(ColorScheme.TEXT_COLOR);
+		mana.setIconTextGap(6);
+		assets.addManaIcon(mana);
 		JLabel daily = new JLabel(viewModel.getDailyProgressText());
+		daily.setFont(assets.regularFont(14f));
 		daily.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
 		daily.getAccessibleContext().setAccessibleName(
 			"Daily mana progress: " + viewModel.getDailyProgressText());

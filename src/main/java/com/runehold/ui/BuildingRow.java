@@ -5,7 +5,6 @@ import com.runehold.domain.UpgradeResult;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.GridLayout;
 import java.util.function.Consumer;
 import javax.swing.BorderFactory;
@@ -17,7 +16,10 @@ import net.runelite.client.ui.ColorScheme;
 
 final class BuildingRow extends JPanel
 {
-	BuildingRow(RuneholdViewModel.BuildingView building, Consumer<BuildingType> onUpgrade)
+	BuildingRow(
+		RuneholdViewModel.BuildingView building,
+		Consumer<BuildingType> onUpgrade,
+		RuneholdAssets assets)
 	{
 		setLayout(new BorderLayout(0, 7));
 		setBackground(ColorScheme.DARKER_GRAY_COLOR);
@@ -29,9 +31,12 @@ final class BuildingRow extends JPanel
 		JPanel heading = new JPanel(new GridLayout(1, 2, 6, 0));
 		heading.setOpaque(false);
 		JLabel name = new JLabel(building.getName());
-		name.setFont(name.getFont().deriveFont(Font.BOLD));
+		name.setFont(assets.boldFont(16f));
 		name.setForeground(ColorScheme.TEXT_COLOR);
+		name.setIconTextGap(6);
+		assets.addBuildingIcon(building.getType(), name);
 		JLabel level = new JLabel(building.getLevelText(), JLabel.RIGHT);
+		level.setFont(assets.regularFont(12f));
 		level.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
 		heading.add(name);
 		heading.add(level);
@@ -46,11 +51,12 @@ final class BuildingRow extends JPanel
 		description.setWrapStyleWord(true);
 		description.setOpaque(false);
 		description.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-		description.setFont(description.getFont().deriveFont(11f));
+		description.setFont(assets.regularFont(12f));
 		description.setBorder(null);
 		details.add(description, BorderLayout.CENTER);
 
 		JLabel status = new JLabel(building.getStatusText());
+		status.setFont(assets.regularFont(12f));
 		status.setForeground(statusColor(building.getStatus()));
 		status.getAccessibleContext().setAccessibleName(
 			building.getName() + " status: " + building.getStatusText());
@@ -58,6 +64,9 @@ final class BuildingRow extends JPanel
 		add(details, BorderLayout.CENTER);
 
 		JButton action = new JButton(building.getActionText());
+		action.setFont(assets.boldFont(14f));
+		action.setIconTextGap(6);
+		assets.addUpgradeIcon(action);
 		action.setEnabled(building.isActionEnabled());
 		action.setToolTipText(building.getStatusText());
 		action.getAccessibleContext().setAccessibleName(
