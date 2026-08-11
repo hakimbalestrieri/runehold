@@ -13,11 +13,11 @@ Status: plan ready for review; implementation not started.
   - [x] Conversion and remainder carry.
   - [x] Daily cap and date rollover.
   - [x] Initial village balance.
-- [ ] Task 3: implement village upgrades with tests first.
-  - [ ] Four-building catalog.
-  - [ ] Unlocks, costs, and maximum levels.
-  - [ ] Atomic success/failure transactions.
-- [ ] Checkpoint: run all pure-domain tests.
+- [x] Task 3: implement village upgrades with tests first.
+  - [x] Four-building catalog.
+  - [x] Unlocks, costs, and maximum levels.
+  - [x] Atomic success/failure transactions.
+- [x] Checkpoint: run all pure-domain tests.
 - [ ] Task 4: implement versioned profile persistence.
   - [ ] JSON round-trip.
   - [ ] Corrupt and unsupported schema recovery.

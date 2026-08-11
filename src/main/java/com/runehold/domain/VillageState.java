@@ -1,6 +1,7 @@
 package com.runehold.domain;
 
 import java.time.LocalDate;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -12,6 +13,7 @@ public final class VillageState
 	private long mana;
 	private final Map<String, Integer> xpBaselines;
 	private final Map<String, Integer> xpRemainders;
+	private final Map<BuildingType, Integer> buildingLevels;
 	private int manaEarnedToday;
 	private LocalDate manaEarningDate;
 
@@ -21,6 +23,8 @@ public final class VillageState
 		this.manaEarningDate = Objects.requireNonNull(manaEarningDate, "manaEarningDate");
 		xpBaselines = new HashMap<>();
 		xpRemainders = new HashMap<>();
+		buildingLevels = new EnumMap<>(BuildingType.class);
+		buildingLevels.put(BuildingType.TOWN_HALL, 1);
 	}
 
 	public static VillageState fresh(LocalDate today)
@@ -46,6 +50,15 @@ public final class VillageState
 	public int getXpRemainder(String skillKey)
 	{
 		return xpRemainders.getOrDefault(skillKey, 0);
+	}
+
+	public int levelOf(BuildingType type)
+	{
+		if (type == null)
+		{
+			throw new IllegalArgumentException("building type is required");
+		}
+		return buildingLevels.getOrDefault(type, 0);
 	}
 
 	Integer getXpBaseline(String skillKey)
@@ -78,6 +91,24 @@ public final class VillageState
 
 		mana += amount;
 		manaEarnedToday += amount;
+	}
+
+	void spendMana(int amount)
+	{
+		if (amount < 0 || amount > mana)
+		{
+			throw new IllegalArgumentException("invalid mana spend: " + amount);
+		}
+		mana -= amount;
+	}
+
+	void setBuildingLevel(BuildingType type, int level)
+	{
+		if (type == null || level < 0)
+		{
+			throw new IllegalArgumentException("invalid building level");
+		}
+		buildingLevels.put(type, level);
 	}
 
 	void beginEarningDay(LocalDate date)
