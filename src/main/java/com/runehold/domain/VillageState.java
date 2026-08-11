@@ -10,6 +10,7 @@ import java.util.Objects;
 public final class VillageState
 {
 	public static final long STARTER_MANA = 250L;
+	public static final int MAX_TRACKED_SKILLS = 64;
 
 	private long mana;
 	private final Map<String, Integer> xpBaselines;
@@ -55,6 +56,11 @@ public final class VillageState
 		if (manaEarnedToday < 0 || manaEarnedToday > ManaLedger.DAILY_MANA_CAP)
 		{
 			throw new IllegalArgumentException("invalid daily mana");
+		}
+		if (xpBaselines.size() > MAX_TRACKED_SKILLS
+			|| xpRemainders.size() > MAX_TRACKED_SKILLS)
+		{
+			throw new IllegalArgumentException("too many skill tracking entries");
 		}
 
 		VillageState state = new VillageState(mana, manaEarningDate);
@@ -205,7 +211,11 @@ public final class VillageState
 
 	private static void validateSkillEntry(String key, Integer value, boolean remainder)
 	{
-		if (key == null || key.trim().isEmpty() || value == null || value < 0)
+		if (key == null
+			|| key.trim().isEmpty()
+			|| key.length() > 32
+			|| value == null
+			|| value < 0)
 		{
 			throw new IllegalArgumentException("invalid skill tracking entry");
 		}

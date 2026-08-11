@@ -11,6 +11,8 @@ import java.util.Objects;
 
 public final class RuneholdStateCodec
 {
+	static final int MAX_STATE_JSON_LENGTH = 64 * 1024;
+
 	private final Gson gson;
 	private final BuildingCatalog catalog;
 
@@ -29,7 +31,7 @@ public final class RuneholdStateCodec
 	public VillageState decode(String json, LocalDate today)
 	{
 		Objects.requireNonNull(today, "today");
-		if (json == null || json.trim().isEmpty())
+		if (json == null || json.length() > MAX_STATE_JSON_LENGTH || json.trim().isEmpty())
 		{
 			return VillageState.fresh(today);
 		}

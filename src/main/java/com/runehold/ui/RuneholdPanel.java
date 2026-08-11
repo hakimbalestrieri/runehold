@@ -1,7 +1,10 @@
 package com.runehold.ui;
 
+import com.runehold.domain.BuildingType;
 import java.awt.BorderLayout;
 import java.awt.Font;
+import java.util.Objects;
+import java.util.function.Consumer;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -13,40 +16,38 @@ import net.runelite.client.ui.PluginPanel;
 
 public final class RuneholdPanel extends PluginPanel
 {
-	private final RuneholdController controller;
+	private final Consumer<BuildingType> onUpgrade;
 	private final JPanel content = new JPanel();
 
-	public RuneholdPanel(RuneholdController controller)
+	public RuneholdPanel(
+		RuneholdViewModel initialViewModel,
+		Consumer<BuildingType> onUpgrade)
 	{
-		this.controller = controller;
+		this.onUpgrade = Objects.requireNonNull(onUpgrade, "onUpgrade");
 		setLayout(new BorderLayout());
 		content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
 		content.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		content.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		add(content, BorderLayout.NORTH);
-		refresh();
+		refresh(Objects.requireNonNull(initialViewModel, "initialViewModel"));
 	}
 
-	public void refresh()
+	public void refresh(RuneholdViewModel viewModel)
 	{
+		Objects.requireNonNull(viewModel, "viewModel");
 		if (!SwingUtilities.isEventDispatchThread())
 		{
-			SwingUtilities.invokeLater(this::refresh);
+			SwingUtilities.invokeLater(() -> refresh(viewModel));
 			return;
 		}
 
-		RuneholdViewModel viewModel = controller.getViewModel();
 		content.removeAll();
 		content.add(createHeader(viewModel));
 		content.add(Box.createVerticalStrut(10));
 
 		for (RuneholdViewModel.BuildingView building : viewModel.getBuildings())
 		{
-			content.add(new BuildingRow(building, type ->
-			{
-				controller.upgrade(type);
-				refresh();
-			}));
+			content.add(new BuildingRow(building, onUpgrade));
 			content.add(Box.createVerticalStrut(8));
 		}
 

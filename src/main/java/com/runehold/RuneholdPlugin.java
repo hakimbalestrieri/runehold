@@ -2,6 +2,7 @@ package com.runehold;
 
 import com.google.gson.Gson;
 import com.runehold.domain.BuildingCatalog;
+import com.runehold.domain.BuildingType;
 import com.runehold.domain.ManaLedger;
 import com.runehold.domain.Village;
 import com.runehold.domain.VillageState;
@@ -17,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.GameState;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.StatChanged;
+import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
@@ -41,10 +43,14 @@ public class RuneholdPlugin extends Plugin
 	@Inject
 	private Gson gson;
 
+	@Inject
+	private ClientThread clientThread;
+
 	private BuildingCatalog catalog;
 	private RuneholdStateStore stateStore;
 	private VillageState state;
 	private RuneholdXpEventAdapter xpEventAdapter;
+	private RuneholdController controller;
 	private RuneholdPanel panel;
 	private NavigationButton navigationButton;
 	private String activeProfileKey;
@@ -75,6 +81,8 @@ public class RuneholdPlugin extends Plugin
 		removeNavigation();
 		activeProfileKey = null;
 		xpEventAdapter = null;
+		controller = null;
+		panel = null;
 		state = null;
 		stateStore = null;
 		catalog = null;
@@ -88,7 +96,7 @@ public class RuneholdPlugin extends Plugin
 		if (xpEventAdapter.record(event) > 0)
 		{
 			stateStore.save(state);
-			panel.refresh();
+			refreshPanel();
 		}
 	}
 
@@ -130,17 +138,39 @@ public class RuneholdPlugin extends Plugin
 		Village village = new Village(state, catalog);
 		ManaLedger ledger = new ManaLedger(state, LocalDate::now);
 		xpEventAdapter = new RuneholdXpEventAdapter(ledger);
-		RuneholdController controller = new RuneholdController(
+		RuneholdController loadedController = new RuneholdController(
 			state,
 			village,
 			catalog,
-			updatedState ->
-			{
-				stateStore.save(updatedState);
-				panel.refresh();
-			});
-		panel = new RuneholdPanel(controller);
+			stateStore::save);
+		RuneholdPanel loadedPanel = new RuneholdPanel(
+			loadedController.getViewModel(),
+			type -> requestUpgrade(loadedController, type));
+		controller = loadedController;
+		panel = loadedPanel;
 		replaceNavigation();
+	}
+
+	private void requestUpgrade(RuneholdController source, BuildingType type)
+	{
+		clientThread.invokeLater(() ->
+		{
+			if (controller != source)
+			{
+				return;
+			}
+
+			source.upgrade(type);
+			refreshPanel();
+		});
+	}
+
+	private void refreshPanel()
+	{
+		if (controller != null && panel != null)
+		{
+			panel.refresh(controller.getViewModel());
+		}
 	}
 
 	private void replaceNavigation()

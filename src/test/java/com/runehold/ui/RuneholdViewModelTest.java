@@ -107,10 +107,42 @@ public class RuneholdViewModelTest
 			ignored -> { });
 		AtomicReference<RuneholdPanel> panel = new AtomicReference<>();
 
-		SwingUtilities.invokeAndWait(() -> panel.set(new RuneholdPanel(controller)));
+		SwingUtilities.invokeAndWait(() -> panel.set(new RuneholdPanel(
+			controller.getViewModel(),
+			ignored -> { })));
 
 		assertEquals(4, countButtons(panel.get()));
 		assertEquals(2, countEnabledButtons(panel.get()));
+	}
+
+	@Test
+	public void panelEmitsUpgradeRequestWithoutMutatingDomainOnTheEdt() throws Exception
+	{
+		RuneholdController controller = new RuneholdController(
+			state,
+			village,
+			catalog,
+			ignored -> { });
+		AtomicReference<BuildingType> requested = new AtomicReference<>();
+		AtomicInteger requestCount = new AtomicInteger();
+		AtomicReference<RuneholdPanel> panel = new AtomicReference<>();
+
+		SwingUtilities.invokeAndWait(() ->
+		{
+			panel.set(new RuneholdPanel(controller.getViewModel(), type ->
+			{
+				requested.set(type);
+				requestCount.incrementAndGet();
+			}));
+			JButton buildButton = findButton(panel.get(), "Build (100)");
+			buildButton.doClick();
+			buildButton.doClick();
+		});
+
+		assertEquals(BuildingType.MANA_WELL, requested.get());
+		assertEquals(1, requestCount.get());
+		assertEquals(250L, state.getMana());
+		assertEquals(0, village.levelOf(BuildingType.MANA_WELL));
 	}
 
 	private static int countButtons(Container container)
@@ -138,5 +170,25 @@ public class RuneholdViewModelTest
 			}
 		}
 		return count;
+	}
+
+	private static JButton findButton(Container container, String text)
+	{
+		for (Component component : container.getComponents())
+		{
+			if (component instanceof JButton && text.equals(((JButton) component).getText()))
+			{
+				return (JButton) component;
+			}
+			if (component instanceof Container)
+			{
+				JButton nested = findButton((Container) component, text);
+				if (nested != null)
+				{
+					return nested;
+				}
+			}
+		}
+		return null;
 	}
 }

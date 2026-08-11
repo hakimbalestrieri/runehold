@@ -7,6 +7,8 @@ import com.runehold.domain.ManaLedger;
 import com.runehold.domain.Village;
 import com.runehold.domain.VillageState;
 import java.time.LocalDate;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -94,6 +96,37 @@ public class RuneholdStateCodecTest
 	{
 		assertFresh(codec.decode(null, TODAY));
 		assertFresh(codec.decode("  ", TODAY));
+	}
+
+	@Test
+	public void oversizedStateFallsBackBeforeParsing()
+	{
+		String oversized = "x".repeat(RuneholdStateCodec.MAX_STATE_JSON_LENGTH + 1);
+
+		assertFresh(codec.decode(oversized, TODAY));
+	}
+
+	@Test
+	public void excessiveSkillTrackingEntriesFallBackToFreshState()
+	{
+		Map<String, Integer> baselines = new LinkedHashMap<>();
+		for (int index = 0; index <= VillageState.MAX_TRACKED_SKILLS; index++)
+		{
+			baselines.put("SKILL_" + index, index);
+		}
+
+		Map<String, Object> persisted = new LinkedHashMap<>();
+		persisted.put("schemaVersion", 1);
+		persisted.put("mana", 250);
+		persisted.put("manaEarnedToday", 0);
+		persisted.put("manaEarningDate", "2026-08-11");
+		persisted.put("xpBaselines", baselines);
+		persisted.put("xpRemainders", new LinkedHashMap<>());
+		Map<String, Integer> buildings = new LinkedHashMap<>();
+		buildings.put("TOWN_HALL", 1);
+		persisted.put("buildingLevels", buildings);
+
+		assertFresh(codec.decode(new Gson().toJson(persisted), TODAY));
 	}
 
 	private static void assertFresh(VillageState state)

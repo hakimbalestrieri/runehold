@@ -63,7 +63,11 @@ final class BuildingRow extends JPanel
 		action.getAccessibleContext().setAccessibleName(
 			building.getActionText() + " for " + building.getName());
 		action.getAccessibleContext().setAccessibleDescription(building.getStatusText());
-		action.addActionListener(event -> onUpgrade.accept(building.getType()));
+		action.addActionListener(event ->
+		{
+			action.setEnabled(false);
+			onUpgrade.accept(building.getType());
+		});
 		add(action, BorderLayout.SOUTH);
 	}
 
