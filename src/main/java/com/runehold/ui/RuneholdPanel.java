@@ -2,15 +2,14 @@ package com.runehold.ui;
 
 import com.runehold.domain.BuildingType;
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.util.Objects;
 import java.util.function.Consumer;
-import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
 
 public final class RuneholdPanel extends PluginPanel
@@ -27,9 +26,10 @@ public final class RuneholdPanel extends PluginPanel
 		this.onUpgrade = Objects.requireNonNull(onUpgrade, "onUpgrade");
 		this.assets = Objects.requireNonNull(assets, "assets");
 		setLayout(new BorderLayout());
+		setBackground(RuneholdTheme.BACKGROUND);
 		content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-		content.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		content.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+		content.setBackground(RuneholdTheme.BACKGROUND);
+		content.setBorder(javax.swing.BorderFactory.createEmptyBorder(7, 7, 7, 7));
 		add(content, BorderLayout.NORTH);
 		refresh(Objects.requireNonNull(initialViewModel, "initialViewModel"));
 	}
@@ -45,12 +45,12 @@ public final class RuneholdPanel extends PluginPanel
 
 		content.removeAll();
 		content.add(createHeader(viewModel));
-		content.add(Box.createVerticalStrut(10));
+		content.add(Box.createVerticalStrut(7));
 
 		for (RuneholdViewModel.BuildingView building : viewModel.getBuildings())
 		{
 			content.add(new BuildingRow(building, onUpgrade, assets));
-			content.add(Box.createVerticalStrut(8));
+			content.add(Box.createVerticalStrut(6));
 		}
 
 		content.revalidate();
@@ -61,27 +61,32 @@ public final class RuneholdPanel extends PluginPanel
 	{
 		JPanel header = new JPanel();
 		header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
-		header.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		header.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+		header.setBackground(RuneholdTheme.HEADER);
+		header.setBorder(RuneholdTheme.stoneBorder(7));
+		header.setMaximumSize(new Dimension(Integer.MAX_VALUE, 96));
+		header.setAlignmentX(LEFT_ALIGNMENT);
 
 		JLabel title = new JLabel("RUNEHOLD");
-		title.setFont(assets.boldFont(20f));
-		title.setForeground(ColorScheme.BRAND_ORANGE);
+		RuneholdTheme.styleLabel(title);
+		title.setFont(assets.boldFont(18f));
+		title.setForeground(RuneholdTheme.ORANGE);
 		JLabel mana = new JLabel(viewModel.getManaText());
-		mana.setFont(assets.boldFont(16f));
-		mana.setForeground(ColorScheme.TEXT_COLOR);
+		RuneholdTheme.styleLabel(mana);
+		mana.setFont(assets.boldFont(14f));
+		mana.setForeground(RuneholdTheme.TEXT);
 		mana.setIconTextGap(6);
 		assets.addManaIcon(mana);
 		JLabel daily = new JLabel(viewModel.getDailyProgressText());
-		daily.setFont(assets.regularFont(14f));
-		daily.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		RuneholdTheme.styleLabel(daily);
+		daily.setFont(assets.regularFont(12f));
+		daily.setForeground(RuneholdTheme.TEXT_MUTED);
 		daily.getAccessibleContext().setAccessibleName(
 			"Daily mana progress: " + viewModel.getDailyProgressText());
 
 		header.add(title);
-		header.add(Box.createVerticalStrut(7));
+		header.add(Box.createVerticalStrut(4));
 		header.add(mana);
-		header.add(Box.createVerticalStrut(3));
+		header.add(Box.createVerticalStrut(2));
 		header.add(daily);
 		return header;
 	}

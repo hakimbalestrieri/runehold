@@ -7,12 +7,10 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.util.function.Consumer;
-import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
-import net.runelite.client.ui.ColorScheme;
 
 final class BuildingRow extends JPanel
 {
@@ -21,23 +19,24 @@ final class BuildingRow extends JPanel
 		Consumer<BuildingType> onUpgrade,
 		RuneholdAssets assets)
 	{
-		setLayout(new BorderLayout(0, 7));
-		setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		setBorder(BorderFactory.createCompoundBorder(
-			BorderFactory.createLineBorder(ColorScheme.BORDER_COLOR),
-			BorderFactory.createEmptyBorder(9, 9, 9, 9)));
-		setMaximumSize(new Dimension(Integer.MAX_VALUE, 174));
+		setLayout(new BorderLayout(0, 5));
+		setBackground(RuneholdTheme.PANEL);
+		setBorder(RuneholdTheme.stoneBorder(6));
+		setMaximumSize(new Dimension(Integer.MAX_VALUE, 146));
+		setAlignmentX(LEFT_ALIGNMENT);
 
 		JPanel heading = new JPanel(new GridLayout(1, 2, 6, 0));
 		heading.setOpaque(false);
 		JLabel name = new JLabel(building.getName());
-		name.setFont(assets.boldFont(16f));
-		name.setForeground(ColorScheme.TEXT_COLOR);
-		name.setIconTextGap(6);
+		RuneholdTheme.styleLabel(name);
+		name.setFont(assets.boldFont(14f));
+		name.setForeground(RuneholdTheme.ORANGE);
+		name.setIconTextGap(4);
 		assets.addBuildingIcon(building.getType(), name);
 		JLabel level = new JLabel(building.getLevelText(), JLabel.RIGHT);
-		level.setFont(assets.regularFont(12f));
-		level.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+		RuneholdTheme.styleLabel(level);
+		level.setFont(assets.regularFont(11f));
+		level.setForeground(RuneholdTheme.TEXT_MUTED);
 		heading.add(name);
 		heading.add(level);
 		add(heading, BorderLayout.NORTH);
@@ -50,13 +49,15 @@ final class BuildingRow extends JPanel
 		description.setLineWrap(true);
 		description.setWrapStyleWord(true);
 		description.setOpaque(false);
-		description.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-		description.setFont(assets.regularFont(12f));
+		description.setForeground(RuneholdTheme.TEXT);
+		description.setFont(assets.regularFont(11f));
+		description.setRows(2);
 		description.setBorder(null);
 		details.add(description, BorderLayout.CENTER);
 
 		JLabel status = new JLabel(building.getStatusText());
-		status.setFont(assets.regularFont(12f));
+		RuneholdTheme.styleLabel(status);
+		status.setFont(assets.regularFont(11f));
 		status.setForeground(statusColor(building.getStatus()));
 		status.getAccessibleContext().setAccessibleName(
 			building.getName() + " status: " + building.getStatusText());
@@ -64,8 +65,9 @@ final class BuildingRow extends JPanel
 		add(details, BorderLayout.CENTER);
 
 		JButton action = new JButton(building.getActionText());
-		action.setFont(assets.boldFont(14f));
-		action.setIconTextGap(6);
+		action.setFont(assets.boldFont(12f));
+		action.setIconTextGap(4);
+		RuneholdTheme.styleActionButton(action);
 		assets.addUpgradeIcon(action);
 		action.setEnabled(building.isActionEnabled());
 		action.setToolTipText(building.getStatusText());
@@ -85,14 +87,14 @@ final class BuildingRow extends JPanel
 		switch (status)
 		{
 			case SUCCESS:
-				return ColorScheme.PROGRESS_COMPLETE_COLOR;
+				return RuneholdTheme.SUCCESS;
 			case INSUFFICIENT_MANA:
-				return ColorScheme.PROGRESS_ERROR_COLOR;
+				return RuneholdTheme.ERROR;
 			case MAX_LEVEL:
-				return ColorScheme.BRAND_ORANGE;
+				return RuneholdTheme.ORANGE;
 			case LOCKED:
 			default:
-				return ColorScheme.LIGHT_GRAY_COLOR;
+				return RuneholdTheme.TEXT_MUTED;
 		}
 	}
 }

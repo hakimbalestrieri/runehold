@@ -22,16 +22,24 @@ purchases, inventory movement, and existing wealth award no mana.
 
 ## OSRS visual identity
 
-The current panel uses RuneLite's game-native regular/bold fonts everywhere and
-loads recognizable OSRS item sprites at runtime for mana, buildings, and upgrade
-actions. These images come from the user's local game cache through RuneLite's
-`ItemManager`; extracted game textures and font files are not packaged in the
-plugin JAR.
+The current panel combines RuneLite's game-native regular/bold fonts and
+cache-backed item sprites with an original code-drawn Runehold skin: compact
+square stone borders, an earthy brown palette, flat carved buttons, and hard
+one-pixel text shadows. It does not inherit modern rounded or gradient button
+rendering from the host look and feel.
+
+OSRS inventory icons keep their native 36 x 32 slots. They come from the user's
+local game cache through RuneLite's `ItemManager`; extracted game textures and
+font files are not packaged in the plugin JAR. `osrsbox-db` and `osrs-icons` were
+used only to calibrate dimensions, alpha behavior, material ramps, and item
+identity.
 
 The dedicated village will follow the same boundary: RuneLite runtime assets may
 decorate HUD controls, while terrain, buildings, scaffolding, characters, and
 the Runehold logo remain original project artwork. See
 [the complete asset inventory and Jagex attribution](THIRD_PARTY_NOTICES.md).
+The active visual targets are the
+[OSRS 2007 Runehold previews](docs/design/runehold-village-art-direction.md).
 
 ## Building progression
 

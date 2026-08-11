@@ -162,6 +162,39 @@ public class RuneholdViewModelTest
 	}
 
 	@Test
+	public void panelUsesCompactOsrsStoneTheme() throws Exception
+	{
+		RuneholdController controller = new RuneholdController(
+			state,
+			village,
+			catalog,
+			ignored -> { });
+		AtomicReference<RuneholdPanel> panel = new AtomicReference<>();
+
+		SwingUtilities.invokeAndWait(() -> panel.set(new RuneholdPanel(
+			controller.getViewModel(),
+			ignored -> { },
+			new RecordingRuneholdAssets())));
+
+		assertEquals(RuneholdTheme.BACKGROUND, panel.get().getBackground());
+		for (BuildingRow row : findComponents(panel.get(), BuildingRow.class))
+		{
+			assertEquals(RuneholdTheme.PANEL, row.getBackground());
+			assertTrue(row.getMaximumSize().height <= 146);
+		}
+		for (JButton button : findComponents(panel.get(), JButton.class))
+		{
+			assertTrue(button.getUI() instanceof RuneholdButtonUI);
+			assertFalse(button.isContentAreaFilled());
+			assertFalse(button.isBorderPainted());
+		}
+		for (JLabel label : findComponents(panel.get(), JLabel.class))
+		{
+			assertTrue(label.getUI() instanceof RuneholdLabelUI);
+		}
+	}
+
+	@Test
 	public void panelEmitsUpgradeRequestWithoutMutatingDomainOnTheEdt() throws Exception
 	{
 		RuneholdController controller = new RuneholdController(
@@ -256,6 +289,25 @@ public class RuneholdViewModelTest
 			}
 		}
 		return null;
+	}
+
+	private static <T extends Component> java.util.List<T> findComponents(
+		Container container,
+		Class<T> type)
+	{
+		java.util.List<T> matches = new java.util.ArrayList<>();
+		for (Component component : container.getComponents())
+		{
+			if (type.isInstance(component))
+			{
+				matches.add(type.cast(component));
+			}
+			if (component instanceof Container)
+			{
+				matches.addAll(findComponents((Container) component, type));
+			}
+		}
+		return matches;
 	}
 
 	private static final class RecordingRuneholdAssets implements RuneholdAssets
