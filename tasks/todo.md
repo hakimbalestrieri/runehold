@@ -8,11 +8,11 @@ Status: plan ready for review; implementation not started.
   - [x] Add Gradle build, settings, wrapper, metadata, and ignore rules.
   - [x] Add project constraints and test launcher.
   - [x] Make smoke test and full build pass.
-- [ ] Task 2: implement XP-to-mana rules with tests first.
-  - [ ] Baseline behavior and invalid deltas.
-  - [ ] Conversion and remainder carry.
-  - [ ] Daily cap and date rollover.
-  - [ ] Initial village balance.
+- [x] Task 2: implement XP-to-mana rules with tests first.
+  - [x] Baseline behavior and invalid deltas.
+  - [x] Conversion and remainder carry.
+  - [x] Daily cap and date rollover.
+  - [x] Initial village balance.
 - [ ] Task 3: implement village upgrades with tests first.
   - [ ] Four-building catalog.
   - [ ] Unlocks, costs, and maximum levels.
