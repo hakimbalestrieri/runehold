@@ -22,10 +22,10 @@ Status: plan ready for review; implementation not started.
   - [x] JSON round-trip.
   - [x] Corrupt and unsupported schema recovery.
   - [x] Missing-profile behavior.
-- [ ] Task 5: implement the RuneLite side panel.
-  - [ ] Mana and daily-cap header.
-  - [ ] Building rows and action states.
-  - [ ] Keyboard/accessibility and EDT behavior.
+- [x] Task 5: implement the RuneLite side panel.
+  - [x] Mana and daily-cap header.
+  - [x] Building rows and action states.
+  - [x] Keyboard/accessibility and EDT behavior.
 - [ ] Task 6: integrate lifecycle and `StatChanged` events.
   - [ ] Toolbar navigation and clean teardown.
   - [ ] XP event adapter and session baseline reset.

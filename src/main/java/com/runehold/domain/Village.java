@@ -20,6 +20,19 @@ public final class Village
 
 	public UpgradeResult upgrade(BuildingType type)
 	{
+		UpgradeResult result = previewUpgrade(type);
+		if (!result.isSuccess())
+		{
+			return result;
+		}
+
+		state.spendMana(result.getRequiredMana());
+		state.setBuildingLevel(type, result.getNewLevel());
+		return result;
+	}
+
+	public UpgradeResult previewUpgrade(BuildingType type)
+	{
 		if (type == null)
 		{
 			throw new IllegalArgumentException("building type is required");
@@ -45,8 +58,6 @@ public final class Village
 			return UpgradeResult.insufficientMana(type, currentLevel, requiredMana);
 		}
 
-		state.spendMana(requiredMana);
-		state.setBuildingLevel(type, targetLevel);
 		return UpgradeResult.success(type, targetLevel, requiredMana);
 	}
 }

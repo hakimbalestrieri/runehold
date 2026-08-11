@@ -89,6 +89,20 @@ public class VillageTest
 	}
 
 	@Test
+	public void previewReportsNextUpgradeWithoutMutation()
+	{
+		long manaBefore = state.getMana();
+
+		UpgradeResult preview = village.previewUpgrade(BuildingType.MANA_WELL);
+
+		assertEquals(UpgradeResult.Status.SUCCESS, preview.getStatus());
+		assertEquals(1, preview.getNewLevel());
+		assertEquals(100, preview.getRequiredMana());
+		assertEquals(manaBefore, state.getMana());
+		assertEquals(0, village.levelOf(BuildingType.MANA_WELL));
+	}
+
+	@Test
 	public void maximumLevelDoesNotMutateVillage()
 	{
 		state.addMana(100_000);
