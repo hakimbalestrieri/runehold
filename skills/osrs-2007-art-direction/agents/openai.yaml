@@ -1,0 +1,4 @@
+interface:
+  display_name: "OSRS 2007 Art Direction"
+  short_description: "Create corpus-grounded OSRS-era visuals"
+  default_prompt: "Use $osrs-2007-art-direction to design a corpus-grounded 2007-era OSRS plugin preview while respecting RuneLite asset boundaries."

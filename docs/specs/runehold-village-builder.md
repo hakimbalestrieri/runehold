@@ -160,8 +160,8 @@ d'accélération caché.
   dans le dépôt ou redistribué dans le JAR.
 - Les bâtiments, l'échafaudage et le constructeur utilisent des PNG originaux
   optimisés et chargés avec `ImageUtil.loadImageResource`.
-- Les sprites suivent la référence
-  `docs/design/runehold-village-concept-v2.png` mais ne copient aucun asset tiers.
+- Les sprites suivent les références actives dans
+  `docs/design/runehold-village-art-direction.md` mais ne copient aucun asset tiers.
 - Les bâtiments possèdent une silhouette propre à Runehold. Les niveaux supérieurs
   peuvent utiliser des ornements procéduraux dans cette tranche ; une série de
   sprites complète par niveau est reportée si elle met en danger le moteur de
