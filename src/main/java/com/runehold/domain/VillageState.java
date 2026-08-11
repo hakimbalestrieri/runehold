@@ -2,6 +2,7 @@ package com.runehold.domain;
 
 import java.time.LocalDate;
 import java.util.EnumMap;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -24,12 +25,62 @@ public final class VillageState
 		xpBaselines = new HashMap<>();
 		xpRemainders = new HashMap<>();
 		buildingLevels = new EnumMap<>(BuildingType.class);
+		for (BuildingType type : BuildingType.values())
+		{
+			buildingLevels.put(type, 0);
+		}
 		buildingLevels.put(BuildingType.TOWN_HALL, 1);
 	}
 
 	public static VillageState fresh(LocalDate today)
 	{
 		return new VillageState(STARTER_MANA, today);
+	}
+
+	public static VillageState restore(
+		long mana,
+		Map<String, Integer> xpBaselines,
+		Map<String, Integer> xpRemainders,
+		int manaEarnedToday,
+		LocalDate manaEarningDate,
+		Map<BuildingType, Integer> buildingLevels)
+	{
+		Objects.requireNonNull(xpBaselines, "xpBaselines");
+		Objects.requireNonNull(xpRemainders, "xpRemainders");
+		Objects.requireNonNull(buildingLevels, "buildingLevels");
+		if (mana < 0 || mana > Long.MAX_VALUE - ManaLedger.DAILY_MANA_CAP)
+		{
+			throw new IllegalArgumentException("invalid mana balance");
+		}
+		if (manaEarnedToday < 0 || manaEarnedToday > ManaLedger.DAILY_MANA_CAP)
+		{
+			throw new IllegalArgumentException("invalid daily mana");
+		}
+
+		VillageState state = new VillageState(mana, manaEarningDate);
+		state.manaEarnedToday = manaEarnedToday;
+		state.xpBaselines.clear();
+		for (Map.Entry<String, Integer> entry : xpBaselines.entrySet())
+		{
+			validateSkillEntry(entry.getKey(), entry.getValue(), false);
+			state.xpBaselines.put(entry.getKey(), entry.getValue());
+		}
+		state.xpRemainders.clear();
+		for (Map.Entry<String, Integer> entry : xpRemainders.entrySet())
+		{
+			validateSkillEntry(entry.getKey(), entry.getValue(), true);
+			if (entry.getValue() > 0)
+			{
+				state.xpRemainders.put(entry.getKey(), entry.getValue());
+			}
+		}
+		state.buildingLevels.clear();
+		state.buildingLevels.putAll(buildingLevels);
+		if (state.levelOf(BuildingType.TOWN_HALL) < 1)
+		{
+			throw new IllegalArgumentException("Town Hall must be present");
+		}
+		return state;
 	}
 
 	public long getMana()
@@ -50,6 +101,21 @@ public final class VillageState
 	public int getXpRemainder(String skillKey)
 	{
 		return xpRemainders.getOrDefault(skillKey, 0);
+	}
+
+	public Map<String, Integer> getXpBaselines()
+	{
+		return Collections.unmodifiableMap(new HashMap<>(xpBaselines));
+	}
+
+	public Map<String, Integer> getXpRemainders()
+	{
+		return Collections.unmodifiableMap(new HashMap<>(xpRemainders));
+	}
+
+	public Map<BuildingType, Integer> getBuildingLevels()
+	{
+		return Collections.unmodifiableMap(new EnumMap<>(buildingLevels));
 	}
 
 	public int levelOf(BuildingType type)
@@ -115,5 +181,28 @@ public final class VillageState
 	{
 		manaEarningDate = Objects.requireNonNull(date, "date");
 		manaEarnedToday = 0;
+	}
+
+	public void clearXpBaselines()
+	{
+		xpBaselines.clear();
+	}
+
+	public void clearXpTracking()
+	{
+		xpBaselines.clear();
+		xpRemainders.clear();
+	}
+
+	private static void validateSkillEntry(String key, Integer value, boolean remainder)
+	{
+		if (key == null || key.trim().isEmpty() || value == null || value < 0)
+		{
+			throw new IllegalArgumentException("invalid skill tracking entry");
+		}
+		if (remainder && value >= ManaLedger.XP_PER_MANA)
+		{
+			throw new IllegalArgumentException("invalid XP remainder");
+		}
 	}
 }

@@ -18,10 +18,10 @@ Status: plan ready for review; implementation not started.
   - [x] Unlocks, costs, and maximum levels.
   - [x] Atomic success/failure transactions.
 - [x] Checkpoint: run all pure-domain tests.
-- [ ] Task 4: implement versioned profile persistence.
-  - [ ] JSON round-trip.
-  - [ ] Corrupt and unsupported schema recovery.
-  - [ ] Missing-profile behavior.
+- [x] Task 4: implement versioned profile persistence.
+  - [x] JSON round-trip.
+  - [x] Corrupt and unsupported schema recovery.
+  - [x] Missing-profile behavior.
 - [ ] Task 5: implement the RuneLite side panel.
   - [ ] Mana and daily-cap header.
   - [ ] Building rows and action states.
