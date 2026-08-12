@@ -65,10 +65,14 @@ public final class RuneLiteRuneholdAssets implements RuneholdAssets
 				return ItemID.SKILLCAPE_CONSTRUCTION;
 			case MANA_WELL:
 				return ItemID.WATERRUNE;
+			case MANA_GROVE:
+				return ItemID.WATERRUNE;
 			case BARRACKS:
 				return ItemID.BRONZE_SWORD;
 			case WORKSHOP:
 				return ItemID.HAMMER;
+			case RUNE_BANNER:
+				return ItemID.SKILLCAPE_CONSTRUCTION;
 			default:
 				throw new IllegalArgumentException("Unsupported building type: " + type);
 		}

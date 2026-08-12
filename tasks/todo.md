@@ -1,7 +1,8 @@
-# Runehold MVP — Task Checklist
+# Runehold MVP - Task Checklist
 
-Status: MVP and OSRS panel implemented; automated validation passed, awaiting
-the user's manual RuneLite launcher confirmation.
+Status: MVP, OSRS panel, and playable local village-builder slice implemented;
+automated validation passed, awaiting the user's manual RuneLite launcher
+confirmation.
 
 - [x] Define and approve `docs/specs/runehold-mvp.md`.
 - [x] Approve `tasks/plan.md`.
@@ -48,6 +49,9 @@ the user's manual RuneLite launcher confirmation.
   - [x] Place the initial Town Hall at (7, 7).
   - [x] Reject out-of-bounds and colliding placements without mutation.
   - [x] Support atomic building movement while ignoring self-collision.
-- [ ] Integrate layout and construction jobs into versioned village state.
-- [ ] Migrate persisted schema v1 to v2 without losing economy data.
-- [ ] Add the isometric village window, canvas and accessible interactions.
+- [x] Integrate layout and construction jobs into versioned village state.
+- [x] Migrate persisted schema v1 to newer layout schemas without losing economy data.
+- [x] Add the isometric village window, canvas and accessible interactions.
+- [x] Add Build catalogue, categories, placement ghost, Confirm/Cancel and global Edit mode.
+- [x] Add original building PNGs, cached nearest-neighbor scaling and level variants.
+- [x] Add functional builder scenario, projection, collision, resize and depth-order tests.

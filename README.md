@@ -2,8 +2,8 @@
 
 Runehold is a local RuneLite side game for Old School RuneScape. XP earned while
 the plugin is observing a skill becomes mana, and mana grows a small persistent
-village. The first release validates the progression loop before any multiplayer
-or remote service is introduced.
+isometric village. The current release validates the local builder loop before
+any multiplayer or remote service is introduced.
 
 Continuing from another computer or a new AI conversation? Start with
 [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md), which records the active branch,
@@ -18,7 +18,13 @@ skill installation is required after cloning.
 - The first stat event for each skill establishes a baseline and awards nothing.
 - Every subsequent 100 XP awards 1 mana; sub-100 XP remainders carry per skill.
 - Mana earned from XP is capped at 10,000 per local calendar day.
-- Town Hall, Mana Well, Barracks, and Workshop can be built or upgraded.
+- Town Hall, Mana Well, Mana Grove, Barracks, Workshop, and Rune Banner can be
+  placed in a dedicated isometric village window.
+- The village window supports Build, Edit, Move, Confirm, Cancel, Recenter, zoom,
+  panning, placement ghosts, valid/invalid footprints, and a category catalogue.
+- Non-test mode uses one construction job at a time with persisted completion
+  deadlines; test mode gives unlimited mana and instant construction.
+- Mana Grove produces collectable mana over time.
 - Costs, unlock requirements, affordability, and maximum levels are enforced by
   one deterministic domain catalog.
 - State is saved as versioned JSON in RuneLite's profile-scoped configuration.
@@ -29,8 +35,8 @@ purchases, inventory movement, and existing wealth award no mana.
 
 ## OSRS visual identity
 
-The current panel combines RuneLite's game-native regular/bold fonts and
-cache-backed item sprites with an original code-drawn Runehold skin: compact
+The side panel and village window combine RuneLite's game-native regular/bold
+fonts and cache-backed item sprites with an original Runehold skin: compact
 square stone borders, an earthy brown palette, flat carved buttons, and hard
 one-pixel text shadows. It does not inherit modern rounded or gradient button
 rendering from the host look and feel.
@@ -41,24 +47,27 @@ font files are not packaged in the plugin JAR. `osrsbox-db` and `osrs-icons` wer
 used only to calibrate dimensions, alpha behavior, material ramps, and item
 identity.
 
-The dedicated village will follow the same boundary: RuneLite runtime assets may
-decorate HUD controls, while terrain, buildings, scaffolding, characters, and
-the Runehold logo remain original project artwork. See
-[the complete asset inventory and Jagex attribution](THIRD_PARTY_NOTICES.md).
+RuneLite runtime assets may decorate HUD controls, while terrain, building PNGs,
+construction scaffolding, and village visuals remain original project artwork.
+See [the complete asset inventory and Jagex attribution](THIRD_PARTY_NOTICES.md).
 The active visual targets are the
-[OSRS 2007 Runehold previews](docs/design/runehold-village-art-direction.md).
+[OSRS 2007 Runehold previews](docs/design/runehold-village-art-direction.md), and
+the packaged sprite inventory is documented in
+[Runehold Village Assets](docs/design/runehold-village-assets.md).
 
 ## Building progression
 
 | Building | Levels | Upgrade costs by target level | Town Hall requirement |
 | --- | ---: | --- | --- |
-| Town Hall | 1–5 | L2 200, L3 600, L4 1,500, L5 4,000 | — |
-| Mana Well | 0–5 | L1 100, L2 250, L3 750, L4 2,000, L5 5,000 | Same as target level |
-| Barracks | 0–4 | L1 300, L2 900, L3 2,400, L4 6,000 | TH 2, 3, 4, 5 |
-| Workshop | 0–3 | L1 800, L2 2,500, L3 7,000 | TH 3, 4, 5 |
+| Town Hall | 1-5 | L2 200, L3 600, L4 1,500, L5 4,000 | Always present |
+| Mana Well | 0-5 | L1 100, L2 250, L3 750, L4 2,000, L5 5,000 | Same as target level |
+| Mana Grove | 0-4 | L1 150, L2 450, L3 1,200, L4 3,200 | TH 1, 2, 3, 4 |
+| Barracks | 0-4 | L1 300, L2 900, L3 2,400, L4 6,000 | TH 2, 3, 4, 5 |
+| Workshop | 0-3 | L1 800, L2 2,500, L3 7,000 | TH 3, 4, 5 |
+| Rune Banner | 0-1 | L1 25 | TH 1 |
 
-The non-Town-Hall buildings intentionally represent foundations for later game
-systems. They do not yet produce troops, defenses, passive mana, or combat power.
+Barracks and Workshop intentionally remain foundations for later troops and
+defenses. Mana Grove already has local passive mana production and collection.
 
 ## Privacy and safety
 
@@ -86,7 +95,9 @@ wrapper; select JDK 21 with `JAVA_HOME` if JDK 25 is your system default.
 ```
 
 The `run` task opens a RuneLite development client through
-`ExternalPluginManager`. For Jagex Accounts, follow RuneLite's
+`ExternalPluginManager` with `-Drunehold.testing=true`, so the local builder has
+unlimited mana and instant construction for testing. For Jagex Accounts, follow
+RuneLite's
 [development-client login instructions](https://github.com/runelite/runelite/wiki/Using-Jagex-Accounts).
 Only the user should log in and interact with the game.
 
@@ -104,7 +115,7 @@ RuneholdXpEventAdapter -> ManaLedger -> VillageState
                   RuneholdController                 RuneholdStateStore
                          |                             profile JSON only
                          v
-                    RuneholdPanel
+              RuneholdPanel / VillageWindow
 ```
 
 - `com.runehold.domain` is pure Java and has no RuneLite or Swing imports.
@@ -127,8 +138,12 @@ Automated coverage includes:
 - Building costs, unlocks, maximum levels, previews, and atomic failures.
 - Persistence round-trips, corrupt state, unsupported schemas, and missing
   profiles.
-- UI presentation states, event-dispatch-thread construction, RuneLite event
-  mapping, and plugin registration.
+- UI presentation states, isometric projection, canvas rendering, interaction
+  state, visual sprite variants, RuneLite event mapping, and plugin registration.
+- Village-builder placement, movement, cancellation, construction jobs, Mana
+  Grove production, save/reload, and a full functional builder scenario.
+- A representative final screenshot is generated at
+  `build/reports/village-preview.png` during the visual canvas test.
 
 After automated checks pass, complete the
 [manual in-game checklist](docs/manual-test-checklist.md). A passing JVM build is

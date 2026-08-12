@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
@@ -15,6 +16,7 @@ import net.runelite.client.ui.PluginPanel;
 public final class RuneholdPanel extends PluginPanel
 {
 	private final Consumer<BuildingType> onUpgrade;
+	private final Runnable onOpenVillage;
 	private final RuneholdAssets assets;
 	private final JPanel content = new JPanel();
 
@@ -23,7 +25,17 @@ public final class RuneholdPanel extends PluginPanel
 		Consumer<BuildingType> onUpgrade,
 		RuneholdAssets assets)
 	{
+		this(initialViewModel, onUpgrade, () -> { }, assets);
+	}
+
+	public RuneholdPanel(
+		RuneholdViewModel initialViewModel,
+		Consumer<BuildingType> onUpgrade,
+		Runnable onOpenVillage,
+		RuneholdAssets assets)
+	{
 		this.onUpgrade = Objects.requireNonNull(onUpgrade, "onUpgrade");
+		this.onOpenVillage = Objects.requireNonNull(onOpenVillage, "onOpenVillage");
 		this.assets = Objects.requireNonNull(assets, "assets");
 		setLayout(new BorderLayout());
 		setBackground(RuneholdTheme.BACKGROUND);
@@ -46,6 +58,8 @@ public final class RuneholdPanel extends PluginPanel
 		content.removeAll();
 		content.add(createHeader(viewModel));
 		content.add(Box.createVerticalStrut(7));
+		content.add(createVillageButton());
+		content.add(Box.createVerticalStrut(7));
 
 		for (RuneholdViewModel.BuildingView building : viewModel.getBuildings())
 		{
@@ -55,6 +69,19 @@ public final class RuneholdPanel extends PluginPanel
 
 		content.revalidate();
 		content.repaint();
+	}
+
+	private JButton createVillageButton()
+	{
+		JButton openVillage = new JButton("Open village");
+		openVillage.setFont(assets.boldFont(13f));
+		RuneholdTheme.styleActionButton(openVillage);
+		openVillage.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
+		openVillage.setAlignmentX(LEFT_ALIGNMENT);
+		openVillage.setToolTipText("Open the local Runehold village map");
+		openVillage.getAccessibleContext().setAccessibleName("Open Runehold village");
+		openVillage.addActionListener(event -> onOpenVillage.run());
+		return openVillage;
 	}
 
 	private JPanel createHeader(RuneholdViewModel viewModel)

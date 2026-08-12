@@ -26,7 +26,7 @@ On a fresh computer:
 2. Clone the repository and switch to the handoff branch with the commands
    below.
 3. Open the cloned `runehold` directory as the Codex workspace.
-4. Start a task with: `Continue le développement de Runehold.`
+4. Start a task with: `Continue le developpement de Runehold.`
 
 Codex must then perform the startup sequence in `AGENTS.md` before editing.
 
@@ -61,16 +61,22 @@ persistence and RuneLite integration before multiplayer or a backend is added.
 - XP baselines prevent previously earned XP from granting mana.
 - Every 100 newly earned XP grants 1 mana, with per-skill remainders.
 - Daily XP mana is capped at 10,000.
-- Town Hall, Mana Well, Barracks and Workshop have deterministic costs, locks
-  and maximum levels.
+- Town Hall, Mana Well, Mana Grove, Barracks, Workshop and Rune Banner have
+  deterministic costs, locks, footprints and maximum levels.
 - Versioned state is stored with RuneLite's profile-scoped `ConfigManager`.
 - Corrupt or unsupported state safely falls back to a fresh village.
 - The RuneLite side panel uses game-native fonts and cache-backed item sprites.
 - The UI uses an original square stone/wood OSRS-style skin.
 - The toolbar lifecycle, profile switching and shutdown cleanup are implemented.
-- The automated suite currently contains 52 passing tests.
-- The normal Gradle build and the Plugin Hub `standard` build both pass.
-- The official API recorder reported no disallowed APIs.
+- The dedicated village window is implemented with an isometric canvas, Build
+  catalogue, placement ghosts, valid/invalid footprints, Confirm/Cancel, Edit
+  mode, Move, Recenter, zoom and panning.
+- Construction jobs, persisted deadlines, Mana Grove production/collection, mana
+  capacity, unlimited test mana and versioned layout persistence are implemented.
+- Original packaged building PNGs live under `src/main/resources/village/`; the
+  atlas uses nearest-neighbor scaling and cached level variants.
+- The automated suite currently contains 78 passing tests.
+- The normal Gradle test and build tasks pass locally.
 - The first village-builder domain slice defines an 18 x 18 layout, deterministic
   Town Hall placement, centralized building footprints, collision checks and
   atomic placement/movement commands.
@@ -80,17 +86,14 @@ checklist in `docs/manual-test-checklist.md`.
 
 ## Not implemented yet
 
-- A dedicated visual village canvas (the bounded domain grid is implemented).
-- UI controls for placing and moving buildings.
-- Construction timers, builders or building animations.
 - Troops, defenses, combat simulation or raid replays.
 - Accounts, backend, matchmaking, clans or leaderboards.
 - Any network communication or upload of player information.
 
-The recommended next milestone is integrating the layout into versioned village
-state and persistence before building the local isometric canvas. Keep it offline
-and deterministic; design the multiplayer protocol only after the local
-interaction is proven.
+The recommended next milestone is a manual RuneLite pass on the development
+client, followed by deeper polish for multiple builders, richer construction
+animation, and later troop/defense systems. Keep it offline and deterministic;
+design the multiplayer protocol only after the local interaction is proven.
 
 ## Architecture map
 
@@ -147,9 +150,7 @@ game client. Follow the manual checklist after automated checks pass.
 The minimum message is sufficient because `AGENTS.md` contains the mandatory
 bootstrap sequence:
 
-> Continue le développement de Runehold.
+> Continue le developpement de Runehold.
 
 To select a particular increment, append it to that sentence. If no increment
-is specified, continue with the local village canvas and placement model: a
-bounded OSRS-style village area, deterministic grid placement, building
-selection and movement, all offline and covered by tests.
+is specified, continue with manual RuneLite validation and builder polish.

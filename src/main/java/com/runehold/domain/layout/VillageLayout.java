@@ -11,7 +11,18 @@ public final class VillageLayout
 {
 	public static final int COLUMNS = 18;
 	public static final int ROWS = 18;
-	private static final GridPoint INITIAL_TOWN_HALL_POSITION = new GridPoint(7, 7);
+	private static final Map<BuildingType, GridPoint> DEFAULT_POSITIONS =
+		new EnumMap<>(BuildingType.class);
+
+	static
+	{
+		DEFAULT_POSITIONS.put(BuildingType.TOWN_HALL, new GridPoint(7, 7));
+		DEFAULT_POSITIONS.put(BuildingType.MANA_WELL, new GridPoint(3, 9));
+		DEFAULT_POSITIONS.put(BuildingType.MANA_GROVE, new GridPoint(3, 3));
+		DEFAULT_POSITIONS.put(BuildingType.BARRACKS, new GridPoint(11, 4));
+		DEFAULT_POSITIONS.put(BuildingType.WORKSHOP, new GridPoint(11, 11));
+		DEFAULT_POSITIONS.put(BuildingType.RUNE_BANNER, new GridPoint(9, 14));
+	}
 
 	private final BuildingCatalog catalog;
 	private final Map<BuildingType, BuildingPlacement> placements =
@@ -27,8 +38,84 @@ public final class VillageLayout
 		VillageLayout layout = new VillageLayout(catalog);
 		layout.placements.put(
 			BuildingType.TOWN_HALL,
-			new BuildingPlacement(BuildingType.TOWN_HALL, INITIAL_TOWN_HALL_POSITION));
+			new BuildingPlacement(
+				BuildingType.TOWN_HALL,
+				DEFAULT_POSITIONS.get(BuildingType.TOWN_HALL)));
 		return layout;
+	}
+
+	public static VillageLayout forBuildingLevels(
+		BuildingCatalog catalog,
+		Map<BuildingType, Integer> buildingLevels)
+	{
+		Objects.requireNonNull(buildingLevels, "buildingLevels");
+		VillageLayout layout = new VillageLayout(catalog);
+		for (BuildingType type : BuildingType.values())
+		{
+			Integer level = buildingLevels.get(type);
+			if (level == null || level <= 0)
+			{
+				continue;
+			}
+
+			PlacementResult result = layout.place(type, DEFAULT_POSITIONS.get(type));
+			if (!result.isSuccess())
+			{
+				throw new IllegalStateException("invalid default placement for " + type);
+			}
+		}
+		return layout;
+	}
+
+	public static VillageLayout restore(
+		BuildingCatalog catalog,
+		Map<BuildingType, GridPoint> positions)
+	{
+		Objects.requireNonNull(positions, "positions");
+		VillageLayout layout = new VillageLayout(catalog);
+		for (BuildingType type : BuildingType.values())
+		{
+			GridPoint position = positions.get(type);
+			if (position == null)
+			{
+				continue;
+			}
+			PlacementResult result = layout.place(type, position);
+			if (!result.isSuccess())
+			{
+				throw new IllegalArgumentException(
+					"invalid restored placement for " + type + ": " + result.getStatus());
+			}
+		}
+		return layout;
+	}
+
+	public static GridPoint defaultPosition(BuildingType type)
+	{
+		validateType(type);
+		GridPoint position = DEFAULT_POSITIONS.get(type);
+		if (position == null)
+		{
+			throw new IllegalArgumentException("no default position for " + type);
+		}
+		return position;
+	}
+
+	public GridPoint findFirstAvailable(BuildingType type)
+	{
+		validateType(type);
+		for (int y = 0; y < ROWS; y++)
+		{
+			for (int x = 0; x < COLUMNS; x++)
+			{
+				GridPoint point = new GridPoint(x, y);
+				if (previewPlace(type, point).isSuccess())
+				{
+					return point;
+				}
+			}
+		}
+		return null;
 	}
 
 	public Map<BuildingType, BuildingPlacement> getPlacements()

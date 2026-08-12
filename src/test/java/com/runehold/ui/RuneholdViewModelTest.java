@@ -39,15 +39,15 @@ public class RuneholdViewModelTest
 	}
 
 	@Test
-	public void freshVillageHasReadableHeaderAndFourRows()
+	public void freshVillageHasReadableHeaderAndCatalogRows()
 	{
 		RuneholdViewModel viewModel = RuneholdViewModel.from(state, village, catalog);
 
 		assertEquals("250 mana", viewModel.getManaText());
 		assertEquals("Today: 0 / 10,000", viewModel.getDailyProgressText());
-		assertEquals(4, viewModel.getBuildings().size());
+		assertEquals(6, viewModel.getBuildings().size());
 		assertEquals("Level 1 / 5", viewModel.getBuilding(BuildingType.TOWN_HALL).getLevelText());
-		assertEquals("Not built · Max 5", viewModel.getBuilding(BuildingType.MANA_WELL).getLevelText());
+		assertEquals("Not built - Max 5", viewModel.getBuilding(BuildingType.MANA_WELL).getLevelText());
 	}
 
 	@Test
@@ -84,6 +84,38 @@ public class RuneholdViewModelTest
 	}
 
 	@Test
+	public void testingModeShowsUnlimitedManaAndKeepsActionsAffordable()
+	{
+		village = new Village(state, catalog, true);
+		assertTrue(village.upgrade(BuildingType.TOWN_HALL).isSuccess());
+
+		RuneholdViewModel viewModel = RuneholdViewModel.from(state, village, catalog);
+
+		assertEquals("unlimited mana - TEST", viewModel.getManaText());
+		assertEquals("Testing mode - XP tracking unchanged", viewModel.getDailyProgressText());
+		assertTrue(viewModel.getBuilding(BuildingType.BARRACKS).isActionEnabled());
+		assertEquals("Build (free)",
+			viewModel.getBuilding(BuildingType.BARRACKS).getActionText());
+	}
+
+	@Test
+	public void villageResourcesExplainCapacityAndGroveHarvest()
+	{
+		village = new Village(state, catalog, true);
+
+		RuneholdViewModel viewModel = RuneholdViewModel.from(state, village, catalog);
+
+		assertEquals(6, viewModel.getResources().size());
+		assertEquals("Capacity",
+			viewModel.getResources().get(1).getTitle());
+		assertTrue(viewModel.getResources().get(1).getValue().contains("mana max"));
+		assertTrue(viewModel.getResources().get(1).getTooltip().contains("storage limit"));
+		assertEquals("Grove harvest",
+			viewModel.getResources().get(2).getTitle());
+		assertTrue(viewModel.getResources().get(2).getTooltip().contains("passive production"));
+	}
+
+	@Test
 	public void controllerPersistsOnlySuccessfulUpgrades()
 	{
 		AtomicInteger saveCount = new AtomicInteger();
@@ -117,8 +149,32 @@ public class RuneholdViewModelTest
 			ignored -> { },
 			new RecordingRuneholdAssets())));
 
-		assertEquals(4, countButtons(panel.get()));
-		assertEquals(2, countEnabledButtons(panel.get()));
+		assertEquals(7, countButtons(panel.get()));
+		assertEquals(5, countEnabledButtons(panel.get()));
+	}
+
+	@Test
+	public void panelExposesExplicitVillageLauncher() throws Exception
+	{
+		RuneholdController controller = new RuneholdController(
+			state,
+			village,
+			catalog,
+			ignored -> { });
+		AtomicInteger openCount = new AtomicInteger();
+		AtomicReference<RuneholdPanel> panel = new AtomicReference<>();
+
+		SwingUtilities.invokeAndWait(() ->
+		{
+			panel.set(new RuneholdPanel(
+				controller.getViewModel(),
+				ignored -> { },
+				openCount::incrementAndGet,
+				new RecordingRuneholdAssets()));
+			findButton(panel.get(), "Open village").doClick();
+		});
+
+		assertEquals(1, openCount.get());
 	}
 
 	@Test
@@ -154,7 +210,7 @@ public class RuneholdViewModelTest
 		assertEquals(Font.MONOSPACED, title.getFont().getFamily());
 		assertEquals(Font.BOLD, title.getFont().getStyle());
 		assertEquals(1, assets.manaIconCount);
-		assertEquals(4, assets.upgradeIconCount);
+		assertEquals(6, assets.upgradeIconCount);
 		for (BuildingType type : BuildingType.values())
 		{
 			assertEquals(Integer.valueOf(1), assets.buildingIconCounts.get(type));

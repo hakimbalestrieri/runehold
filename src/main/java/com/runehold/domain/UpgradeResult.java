@@ -7,6 +7,7 @@ public final class UpgradeResult
 		SUCCESS,
 		LOCKED,
 		INSUFFICIENT_MANA,
+		BUILDER_BUSY,
 		MAX_LEVEL
 	}
 
@@ -43,6 +44,11 @@ public final class UpgradeResult
 	static UpgradeResult insufficientMana(BuildingType type, int currentLevel, int requiredMana)
 	{
 		return new UpgradeResult(Status.INSUFFICIENT_MANA, type, currentLevel, requiredMana, 0);
+	}
+
+	static UpgradeResult builderBusy(BuildingType type, int currentLevel)
+	{
+		return new UpgradeResult(Status.BUILDER_BUSY, type, currentLevel, 0, 0);
 	}
 
 	static UpgradeResult maxLevel(BuildingType type, int currentLevel)

@@ -11,6 +11,8 @@ public final class PlacementResult
 		OCCUPIED,
 		ALREADY_PLACED,
 		NOT_PLACED
+		,
+		BUILDER_BUSY
 	}
 
 	private final Status status;
@@ -45,6 +47,11 @@ public final class PlacementResult
 	public static PlacementResult notPlaced()
 	{
 		return new PlacementResult(Status.NOT_PLACED, null);
+	}
+
+	public static PlacementResult busy()
+	{
+		return new PlacementResult(Status.BUILDER_BUSY, null);
 	}
 
 	public boolean isSuccess()

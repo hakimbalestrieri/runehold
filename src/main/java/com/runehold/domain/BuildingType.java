@@ -4,6 +4,8 @@ public enum BuildingType
 {
 	TOWN_HALL,
 	MANA_WELL,
+	MANA_GROVE,
 	BARRACKS,
-	WORKSHOP
+	WORKSHOP,
+	RUNE_BANNER
 }

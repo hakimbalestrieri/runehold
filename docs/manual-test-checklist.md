@@ -1,4 +1,4 @@
-# Runehold MVP — Manual RuneLite Test Checklist
+# Runehold MVP - Manual RuneLite Test Checklist
 
 Only the user should perform these steps. Do not automate login, movement, skilling,
 clicks, or other RuneScape input.
@@ -11,15 +11,18 @@ clicks, or other RuneScape input.
 - [ ] Run `.\gradlew.bat run` with JDK 21 selected.
 - [ ] Log in using RuneLite's Jagex Account development-client flow.
 - [ ] Enable Runehold if it is not already enabled.
+- [ ] Confirm the header shows `unlimited mana - TEST` in the development run.
 
 ## Startup and navigation
 
 - [ ] The Runehold shield icon appears in the RuneLite sidebar.
 - [ ] Clicking it opens the panel without console errors.
-- [ ] A fresh profile shows `250 mana` and `Today: 0 / 10,000`.
-- [ ] The Town Hall starts at level 1; the other three buildings are not built.
-- [ ] Town Hall and Mana Well actions are enabled.
-- [ ] Barracks and Workshop display their Town Hall requirements in text.
+- [ ] A fresh profile shows test mana in the development run.
+- [ ] The Town Hall starts at level 1; the other buildings are not built.
+- [ ] The `Open Village` action opens the isometric village window.
+- [ ] The terrain fills most of the window and remains centered after resize.
+- [ ] The Build button opens a category catalogue with Core, Production,
+      Military, Utility and Decoration tabs.
 
 ## XP to mana
 
@@ -34,19 +37,22 @@ clicks, or other RuneScape input.
 
 ## Village transactions
 
-- [ ] Build the Mana Well for 100 mana; its level becomes 1 and balance falls by
-      exactly 100.
-- [ ] With only the fresh-profile balance, Town Hall then reports that 50 mana is
-      missing for its 200-mana upgrade.
-- [ ] Earn at least 50 more mana and upgrade Town Hall to level 2.
-- [ ] Barracks becomes available at Town Hall level 2 if enough mana is present.
+- [ ] Choose Mana Well from Build, test an invalid/colliding footprint, then
+      place it on a valid tile.
+- [ ] Confirm starts or completes construction according to the current mode.
+- [ ] Select the placed building, use Move, test Cancel, then move it again and
+      Confirm.
+- [ ] Recenter, zoom in/out, and pan by dragging empty ground.
+- [ ] Build Mana Grove and confirm its Collect action appears after production.
+- [ ] Upgrade Town Hall and confirm the builder indicator updates.
 - [ ] An unaffordable or locked action never changes balance or building levels.
 - [ ] Buttons work through normal keyboard focus and activation.
 
 ## Persistence and profiles
 
 - [ ] Close and reopen the development client on the same RuneScape profile.
-- [ ] Mana, daily earnings, XP remainders, and building levels are restored.
+- [ ] Mana, daily earnings, XP remainders, building levels, positions, active
+      construction, and Mana Grove stored production are restored.
 - [ ] The first stat update after restart establishes a new baseline and awards
       zero mana.
 - [ ] If a second RuneScape profile is available, switch profiles and confirm it

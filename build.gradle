@@ -39,7 +39,7 @@ tasks.register('run', JavaExec) {
 	classpath = sourceSets.test.runtimeClasspath
 	mainClass = pluginMainClass
 
-	jvmArgs '-ea'
+	jvmArgs '-ea', '-Drunehold.testing=true'
 	args '--developer-mode', '--debug'
 }
 

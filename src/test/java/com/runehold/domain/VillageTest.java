@@ -89,6 +89,20 @@ public class VillageTest
 	}
 
 	@Test
+	public void unlimitedManaModeBypassesCostsWithoutChangingStoredBalance()
+	{
+		village = new Village(state, new BuildingCatalog(), true);
+
+		assertTrue(village.upgrade(BuildingType.TOWN_HALL).isSuccess());
+		assertTrue(village.upgrade(BuildingType.BARRACKS).isSuccess());
+
+		assertTrue(village.hasUnlimitedMana());
+		assertEquals(250L, state.getMana());
+		assertEquals(2, village.levelOf(BuildingType.TOWN_HALL));
+		assertEquals(1, village.levelOf(BuildingType.BARRACKS));
+	}
+
+	@Test
 	public void previewReportsNextUpgradeWithoutMutation()
 	{
 		long manaBefore = state.getMana();

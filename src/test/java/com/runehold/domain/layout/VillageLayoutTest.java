@@ -43,6 +43,27 @@ public class VillageLayoutTest
 	}
 
 	@Test
+	public void createsDeterministicPreviewForEveryBuiltBuilding()
+	{
+		Map<BuildingType, Integer> levels = new java.util.EnumMap<>(BuildingType.class);
+		levels.put(BuildingType.TOWN_HALL, 2);
+		levels.put(BuildingType.MANA_WELL, 1);
+		levels.put(BuildingType.BARRACKS, 1);
+		levels.put(BuildingType.WORKSHOP, 1);
+
+		VillageLayout restored = VillageLayout.forBuildingLevels(catalog, levels);
+
+		assertEquals(new GridPoint(7, 7),
+			restored.getPlacement(BuildingType.TOWN_HALL).getPosition());
+		assertEquals(new GridPoint(3, 9),
+			restored.getPlacement(BuildingType.MANA_WELL).getPosition());
+		assertEquals(new GridPoint(11, 4),
+			restored.getPlacement(BuildingType.BARRACKS).getPosition());
+		assertEquals(new GridPoint(11, 11),
+			restored.getPlacement(BuildingType.WORKSHOP).getPosition());
+	}
+
+	@Test
 	public void placesBuildingAtInclusiveSouthEastBoundary()
 	{
 		PlacementResult result = layout.place(
@@ -65,6 +86,20 @@ public class VillageLayoutTest
 		assertFalse(result.isSuccess());
 		assertEquals(PlacementResult.Status.OUT_OF_BOUNDS, result.getStatus());
 		assertEquals(1, layout.getPlacements().size());
+	}
+
+	@Test
+	public void acceptsFootprintsThatFitEvenWhenSpritesAreLarge()
+	{
+		PlacementResult result = layout.place(
+			BuildingType.BARRACKS,
+			new GridPoint(11, 1));
+
+		assertTrue(result.isSuccess());
+		assertEquals(
+			new GridPoint(11, 1),
+			layout.getPlacement(BuildingType.BARRACKS).getPosition());
+		assertEquals(2, layout.getPlacements().size());
 	}
 
 	@Test
@@ -135,12 +170,12 @@ public class VillageLayoutTest
 	@Test
 	public void collidingMoveKeepsOriginalPosition()
 	{
-		assertTrue(layout.place(BuildingType.MANA_WELL, new GridPoint(0, 0)).isSuccess());
+		assertTrue(layout.place(BuildingType.MANA_WELL, new GridPoint(1, 1)).isSuccess());
 		GridPoint original = layout.getPlacement(BuildingType.TOWN_HALL).getPosition();
 
 		PlacementResult result = layout.move(
 			BuildingType.TOWN_HALL,
-			new GridPoint(0, 0));
+			new GridPoint(1, 1));
 
 		assertEquals(PlacementResult.Status.OCCUPIED, result.getStatus());
 		assertEquals(BuildingType.MANA_WELL, result.getBlockingType());
