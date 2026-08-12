@@ -28,6 +28,28 @@ sprite, icon, asset or art-direction change. Follow all references required by
 that skill. No separate installation or copying of the skill is necessary after
 cloning this repository.
 
+## Review agents
+
+Four repository-scoped reviewer agents are committed under `.claude/agents`. They
+review and never edit files. Use them as gates rather than as afterthoughts:
+
+- `software-architect` — before starting a domain slice and again once it
+  compiles. Enforces layering, RuneLite hard constraints and schema versioning.
+  Emits `ARCHITECTURE VERDICT`.
+- `ux-ui-reviewer` — whenever panel, window, view-model or HUD code changes.
+  Enforces state legibility, refusal feedback, keyboard access and EDT
+  correctness. Emits `UX VERDICT`.
+- `osrs-art-director` — for every visual, sprite, icon, tile or asset change.
+  Applies the committed `$osrs-2007-art-direction` skill reject-first. Emits
+  `ART VERDICT`.
+- `qa-reviewer` — once a slice compiles and before declaring anything done. Runs
+  focused tests, the full suite, the build and the diff/secret check, and hunts
+  missing coverage. Emits `QA VERDICT`.
+
+A slice is not finished until the agents whose scope it touches have returned a
+passing verdict backed by real command output. Never report a verdict that was
+not actually produced.
+
 Use branches named `feature/<description>`, `fix/<description>` or
 `docs/<description>`. Never put `codex` in a branch name.
 

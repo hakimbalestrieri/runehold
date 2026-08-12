@@ -51,12 +51,22 @@ public final class RuneLiteRuneholdAssets implements RuneholdAssets
 	}
 
 	@Override
+	public void addGatheringIcon(BuildingType type, JLabel label)
+	{
+		addItemIcon(itemIdFor(type), label);
+	}
+
+	@Override
 	public void addUpgradeIcon(JButton button)
 	{
 		AsyncBufferedImage image = itemManager.getImage(ItemID.HAMMER);
 		image.addTo(button);
 	}
 
+	/**
+	 * Gathering sites produce canonical OSRS resources, so the interface loads the real
+	 * cache sprite for each resource rather than an original placeholder.
+	 */
 	static int itemIdFor(BuildingType type)
 	{
 		switch (Objects.requireNonNull(type, "type"))
@@ -73,6 +83,22 @@ public final class RuneLiteRuneholdAssets implements RuneholdAssets
 				return ItemID.HAMMER;
 			case RUNE_BANNER:
 				return ItemID.SKILLCAPE_CONSTRUCTION;
+			case MINE:
+				return ItemID.IRON_ORE;
+			case FISHING_SPOT:
+				return ItemID.RAW_SHRIMP;
+			case WOODCUTTING_GROVE:
+				return ItemID.LOGS;
+			case QUARRY:
+				return ItemID.LIMESTONE;
+			case FARM:
+				return ItemID.POTATO;
+			case HERB_PATCH:
+				return ItemID.GUAM_LEAF;
+			case CLAY_PIT:
+				return ItemID.CLAY;
+			case RUNE_ESSENCE_SITE:
+				return ItemID.BLANKRUNE;
 			default:
 				throw new IllegalArgumentException("Unsupported building type: " + type);
 		}

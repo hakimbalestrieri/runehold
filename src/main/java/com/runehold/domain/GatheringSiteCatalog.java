@@ -2,71 +2,47 @@ package com.runehold.domain;
 
 import com.runehold.domain.layout.Footprint;
 import com.runehold.domain.layout.GridPoint;
-import java.util.Arrays;
+import com.runehold.domain.layout.VillageLayout;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 public final class GatheringSiteCatalog
 {
-	private final Map<GatheringSiteType, GatheringSiteDefinition> definitions =
-		new EnumMap<>(GatheringSiteType.class);
+	private final Map<BuildingType, GatheringSiteDefinition> definitions =
+		new EnumMap<>(BuildingType.class);
 
 	public GatheringSiteCatalog()
 	{
-		add(GatheringSiteType.MINE, ResourceType.ORE, new Footprint(3, 3),
-			new GridPoint(1, 1), 1, 3, 60, 1, 4,
-			new GridPoint(4, 2), new GridPoint(2, 4));
-		add(GatheringSiteType.FISHING_SPOT, ResourceType.FISH, new Footprint(3, 2),
-			new GridPoint(14, 1), 1, 4, 70, 1, 4,
-			new GridPoint(13, 2), new GridPoint(14, 3));
-		add(GatheringSiteType.WOODCUTTING_GROVE, ResourceType.LOGS, new Footprint(3, 3),
-			new GridPoint(1, 14), 1, 4, 80, 1, 4,
-			new GridPoint(4, 15), new GridPoint(2, 13));
-		add(GatheringSiteType.QUARRY, ResourceType.STONE, new Footprint(3, 3),
-			new GridPoint(14, 14), 1, 3, 80, 1, 4,
-			new GridPoint(13, 15), new GridPoint(15, 13));
-		add(GatheringSiteType.FARM, ResourceType.CROPS, new Footprint(3, 2),
-			new GridPoint(6, 14), 1, 5, 90, 2, 4,
-			new GridPoint(6, 13), new GridPoint(9, 15));
-		add(GatheringSiteType.HERB_PATCH, ResourceType.HERBS, new Footprint(2, 2),
-			new GridPoint(10, 14), 2, 1, 30, 1, 3,
-			new GridPoint(10, 13), new GridPoint(12, 14));
-		add(GatheringSiteType.CLAY_PIT, ResourceType.CLAY, new Footprint(2, 2),
-			new GridPoint(14, 10), 1, 3, 60, 1, 3,
-			new GridPoint(13, 10), new GridPoint(14, 12));
-		add(GatheringSiteType.RUNE_ESSENCE_SITE, ResourceType.RUNE_ESSENCE,
-			new Footprint(2, 2), new GridPoint(9, 1), 3, 1, 25, 1, 3,
-			new GridPoint(9, 3), new GridPoint(11, 2));
+		add(BuildingType.MINE, ResourceType.ORE, 3, 60, 1);
+		add(BuildingType.FISHING_SPOT, ResourceType.FISH, 4, 70, 1);
+		add(BuildingType.WOODCUTTING_GROVE, ResourceType.LOGS, 4, 80, 1);
+		add(BuildingType.QUARRY, ResourceType.STONE, 3, 80, 1);
+		add(BuildingType.FARM, ResourceType.CROPS, 5, 90, 2);
+		add(BuildingType.HERB_PATCH, ResourceType.HERBS, 1, 30, 1);
+		add(BuildingType.CLAY_PIT, ResourceType.CLAY, 3, 60, 1);
+		add(BuildingType.RUNE_ESSENCE_SITE, ResourceType.RUNE_ESSENCE, 1, 25, 1);
 	}
 
 	private void add(
-		GatheringSiteType type,
+		BuildingType type,
 		ResourceType resource,
-		Footprint footprint,
-		GridPoint position,
-		int requiredTownHallLevel,
 		int baseRatePerMinute,
 		int baseStorage,
-		int baseWorkers,
-		int maxLevel,
-		GridPoint... accessPoints)
+		int baseWorkers)
 	{
 		definitions.put(type, new GatheringSiteDefinition(
 			type,
 			resource,
-			footprint,
-			position,
-			requiredTownHallLevel,
 			baseRatePerMinute,
 			baseStorage,
-			baseWorkers,
-			maxLevel,
-			Arrays.asList(accessPoints)));
+			baseWorkers));
 	}
 
-	public GatheringSiteDefinition get(GatheringSiteType type)
+	public GatheringSiteDefinition get(BuildingType type)
 	{
 		GatheringSiteDefinition definition = definitions.get(
 			Objects.requireNonNull(type, "type"));
@@ -77,9 +53,49 @@ public final class GatheringSiteCatalog
 		return definition;
 	}
 
-	public Map<GatheringSiteType, GatheringSiteDefinition> all()
+	public boolean isSite(BuildingType type)
+	{
+		return type != null && definitions.containsKey(type);
+	}
+
+	public Map<BuildingType, GatheringSiteDefinition> all()
 	{
 		return Collections.unmodifiableMap(new EnumMap<>(definitions));
+	}
+
+	/**
+	 * The tiles a villager can stand on to work a site placed at {@code position}: the
+	 * ring immediately around its footprint, clipped to the plot. Access points follow
+	 * the site, so moving a site moves where its workers stand.
+	 */
+	public static List<GridPoint> accessPoints(GridPoint position, Footprint footprint)
+	{
+		Objects.requireNonNull(position, "position");
+		Objects.requireNonNull(footprint, "footprint");
+		List<GridPoint> points = new ArrayList<>();
+		int left = position.getX() - 1;
+		int right = position.getX() + footprint.getWidth();
+		int top = position.getY() - 1;
+		int bottom = position.getY() + footprint.getHeight();
+		for (int x = position.getX(); x < right; x++)
+		{
+			addIfInside(points, x, top);
+			addIfInside(points, x, bottom);
+		}
+		for (int y = position.getY(); y < bottom; y++)
+		{
+			addIfInside(points, left, y);
+			addIfInside(points, right, y);
+		}
+		return points;
+	}
+
+	private static void addIfInside(List<GridPoint> points, int x, int y)
+	{
+		if (x >= 0 && y >= 0 && x < VillageLayout.COLUMNS && y < VillageLayout.ROWS)
+		{
+			points.add(new GridPoint(x, y));
+		}
 	}
 
 	public int generalStorageCapacity(ResourceType type)

@@ -19,6 +19,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Polygon;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -534,18 +535,11 @@ public final class VillageCanvas extends JComponent
 			drawFoundation(g, projection, item.position, footprint);
 		}
 
-		Point north = projection.toScreen(item.position);
-		Point south = projection.toScreen(
-			item.position.getX() + footprint.getWidth(),
-			item.position.getY() + footprint.getHeight());
-		int centerX = (north.x + south.x) / 2;
-		int targetWidth = Math.max(20,
-			(int) Math.round(spriteBaseWidth(item.type) * projection.getTileWidth() / 36.0));
-		targetWidth = containSpriteNearNorthEdge(item.type, projection, south, targetWidth);
-		BufferedImage sprite = sprites.get(item.type, item.level, targetWidth);
-		int drawX = centerX - sprite.getWidth() / 2;
-		int drawY = south.y - sprite.getHeight() - projection.getTileHeight() / 4;
-		drawY = Math.max(drawY, projection.toScreen(0, 0).y - projection.getTileHeight() / 3);
+		Rectangle bounds = spriteBounds(projection, item.type, item.position);
+		int centerX = footprintCenterX(projection, item.type, item.position);
+		BufferedImage sprite = sprites.get(item.type, item.level, bounds.width);
+		int drawX = bounds.x;
+		int drawY = bounds.y;
 
 		Composite oldComposite = g.getComposite();
 		if (item.ghost)
@@ -626,23 +620,70 @@ public final class VillageCanvas extends JComponent
 		}
 	}
 
-	private int containSpriteNearNorthEdge(
-		BuildingType type,
+	/**
+	 * Screen rectangle the sprite is drawn into.
+	 *
+	 * <p>Two invariants live here. The size comes from the artwork and the zoom only, so
+	 * a building is never smaller in one corner of the map than in another. The position
+	 * anchors the sprite's opaque content — not its canvas — onto the footprint diamond,
+	 * so a sprite with uneven padding still stands on its own tiles.
+	 */
+	private Rectangle spriteBounds(
 		IsometricProjection projection,
-		Point south,
-		int targetWidth)
+		BuildingType type,
+		GridPoint position)
 	{
-		int baseWidth = spriteBaseWidth(type);
-		double spriteHeightRatio = spriteBaseHeight(type) / (double) baseWidth;
-		int targetHeight = (int) Math.round(targetWidth * spriteHeightRatio);
-		int topLimit = projection.toScreen(0, 0).y - projection.getTileHeight() / 3;
-		int availableHeight = south.y - projection.getTileHeight() / 4 - topLimit;
-		if (availableHeight >= targetHeight || availableHeight <= 0)
-		{
-			return targetWidth;
-		}
-		double ratio = Math.max(0.58, availableHeight / (double) targetHeight);
-		return Math.max(20, (int) Math.round(targetWidth * ratio));
+		Footprint footprint = catalog.getFootprint(type);
+		Point south = projection.toScreen(
+			position.getX() + footprint.getWidth(),
+			position.getY() + footprint.getHeight());
+		VillageSpriteMetadata metadata = sprites.metadata(type);
+		int tileWidth = projection.getTileWidth();
+		return new Rectangle(
+			footprintCenterX(projection, type, position) - metadata.contentCenterX(tileWidth),
+			south.y
+				- VillageSpriteMetadata.baselineInset(projection.getTileHeight())
+				- metadata.contentBottom(tileWidth),
+			metadata.scaledWidth(tileWidth),
+			metadata.scaledHeight(tileWidth));
+	}
+
+	private int footprintCenterX(
+		IsometricProjection projection,
+		BuildingType type,
+		GridPoint position)
+	{
+		Footprint footprint = catalog.getFootprint(type);
+		Point north = projection.toScreen(position);
+		Point south = projection.toScreen(
+			position.getX() + footprint.getWidth(),
+			position.getY() + footprint.getHeight());
+		return (north.x + south.x) / 2;
+	}
+
+	Rectangle spriteBoundsForTest(BuildingType type, GridPoint position)
+	{
+		return spriteBounds(projection(), type, position);
+	}
+
+	int tileWidthForTest()
+	{
+		return projection().getTileWidth();
+	}
+
+	int footprintCenterXForTest(BuildingType type, GridPoint position)
+	{
+		return footprintCenterX(projection(), type, position);
+	}
+
+	int footprintBaselineYForTest(BuildingType type, GridPoint position)
+	{
+		IsometricProjection projection = projection();
+		Footprint footprint = catalog.getFootprint(type);
+		return projection.toScreen(
+			position.getX() + footprint.getWidth(),
+			position.getY() + footprint.getHeight()).y
+			- VillageSpriteMetadata.baselineInset(projection.getTileHeight());
 	}
 
 	private void drawManaReadyIcon(Graphics2D g, int centerX, int topY)
@@ -1017,17 +1058,10 @@ public final class VillageCanvas extends JComponent
 	{
 		IsometricProjection projection = projection();
 		Footprint footprint = catalog.getFootprint(type);
-		Point north = projection.toScreen(position);
-		Point south = projection.toScreen(
-			position.getX() + footprint.getWidth(),
-			position.getY() + footprint.getHeight());
-		int centerX = (north.x + south.x) / 2;
-		int targetWidth = Math.max(20,
-			(int) Math.round(spriteBaseWidth(type) * projection.getTileWidth() / 36.0));
-		int targetHeight = (int) Math.round(
-			targetWidth * spriteBaseHeight(type) / (double) spriteBaseWidth(type));
-		int drawX = centerX - targetWidth / 2;
-		int drawY = south.y - targetHeight - projection.getTileHeight() / 4;
+		Rectangle bounds = spriteBounds(projection, type, position);
+		int drawX = bounds.x;
+		int drawY = bounds.y;
+		int targetWidth = bounds.width;
 		int minX = projection.toScreen(0, VillageLayout.ROWS).x;
 		int maxX = projection.toScreen(VillageLayout.COLUMNS, 0).x;
 		int minY = projection.toScreen(0, 0).y - projection.getTileHeight() / 2;
@@ -1153,47 +1187,6 @@ public final class VillageCanvas extends JComponent
 			new int[]{north.y, east.y, south.y, west.y}, 4);
 	}
 
-	private static int spriteBaseWidth(BuildingType type)
-	{
-		switch (type)
-		{
-			case TOWN_HALL:
-				return 140;
-			case MANA_WELL:
-				return 92;
-			case MANA_GROVE:
-				return 118;
-			case BARRACKS:
-				return 124;
-			case WORKSHOP:
-				return 124;
-			case RUNE_BANNER:
-				return 48;
-			default:
-				throw new IllegalArgumentException("unsupported building: " + type);
-		}
-	}
-
-	private static int spriteBaseHeight(BuildingType type)
-	{
-		switch (type)
-		{
-			case TOWN_HALL:
-				return 136;
-			case MANA_WELL:
-				return 84;
-			case MANA_GROVE:
-				return 120;
-			case BARRACKS:
-				return 112;
-			case WORKSHOP:
-				return 116;
-			case RUNE_BANNER:
-				return 100;
-			default:
-				throw new IllegalArgumentException("unsupported building: " + type);
-		}
-	}
 
 	private String placementError(PlacementResult result)
 	{

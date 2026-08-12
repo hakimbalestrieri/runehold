@@ -5,7 +5,6 @@ import com.runehold.domain.BuildResult;
 import com.runehold.domain.CollectResult;
 import com.runehold.domain.AssignmentResult;
 import com.runehold.domain.BuildingType;
-import com.runehold.domain.GatheringSiteType;
 import com.runehold.domain.OfflineProgressSummary;
 import com.runehold.domain.ResourceCollectResult;
 import com.runehold.domain.UpgradeResult;
@@ -100,7 +99,7 @@ public final class RuneholdController
 		return result;
 	}
 
-	public AssignmentResult assignWorker(String workerId, GatheringSiteType siteType)
+	public AssignmentResult assignWorker(String workerId, BuildingType siteType)
 	{
 		AssignmentResult result = village.assignWorker(workerId, siteType);
 		if (result.isSuccess())
@@ -120,7 +119,7 @@ public final class RuneholdController
 		return result;
 	}
 
-	public ResourceCollectResult collectGatheringSite(GatheringSiteType siteType)
+	public ResourceCollectResult collectGatheringSite(BuildingType siteType)
 	{
 		ResourceCollectResult result = village.collectGatheringSite(siteType);
 		if (result.getCollected() > 0 || result.getRemainingAtSite() > 0)

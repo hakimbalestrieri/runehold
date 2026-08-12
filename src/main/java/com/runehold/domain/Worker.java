@@ -8,7 +8,7 @@ public final class Worker
 	private final String id;
 	private final String name;
 	private WorkerState state;
-	private GatheringSiteType assignment;
+	private BuildingType assignment;
 	private GridPoint position;
 	private GridPoint destination;
 	private String role;
@@ -17,7 +17,7 @@ public final class Worker
 		String id,
 		String name,
 		WorkerState state,
-		GatheringSiteType assignment,
+		BuildingType assignment,
 		GridPoint position,
 		GridPoint destination,
 		String role)
@@ -58,7 +58,7 @@ public final class Worker
 		return state;
 	}
 
-	public GatheringSiteType getAssignment()
+	public BuildingType getAssignment()
 	{
 		return assignment;
 	}
@@ -78,12 +78,12 @@ public final class Worker
 		return role;
 	}
 
-	void assign(GatheringSiteType site, GridPoint destination)
+	void assign(BuildingType site, GridPoint destination, String siteName)
 	{
 		assignment = Objects.requireNonNull(site, "site");
 		this.destination = Objects.requireNonNull(destination, "destination");
 		state = WorkerState.WALKING_TO_WORK;
-		role = site.getDisplayName() + " Worker";
+		role = siteName + " Worker";
 	}
 
 	void arriveAtWork(GridPoint workTile)

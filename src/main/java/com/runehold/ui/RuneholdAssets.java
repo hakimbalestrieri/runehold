@@ -19,5 +19,7 @@ public interface RuneholdAssets
 
 	void addBuildingIcon(BuildingType type, JLabel label);
 
+	void addGatheringIcon(BuildingType type, JLabel label);
+
 	void addUpgradeIcon(JButton button);
 }

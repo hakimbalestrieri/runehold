@@ -21,8 +21,8 @@ public final class VillageState
 	private final Map<BuildingType, Integer> buildingLevels;
 	private final Map<BuildingType, GridPoint> buildingPositions;
 	private ResourceInventory resources = new ResourceInventory();
-	private final Map<GatheringSiteType, GatheringSiteState> gatheringSites =
-		new EnumMap<>(GatheringSiteType.class);
+	private final Map<BuildingType, GatheringSiteState> gatheringSites =
+		new EnumMap<>(BuildingType.class);
 	private final Map<String, Worker> workers = new HashMap<>();
 	private ConstructionJob constructionJob;
 	private int storedGroveMana;
@@ -142,7 +142,7 @@ public final class VillageState
 		int storedGroveMana,
 		long groveProductionUpdatedAtEpochMillis,
 		ResourceInventory resources,
-		Map<GatheringSiteType, GatheringSiteState> gatheringSites,
+		Map<BuildingType, GatheringSiteState> gatheringSites,
 		Map<String, Worker> workers,
 		long lastOfflineProgressAtEpochMillis)
 	{
@@ -186,12 +186,8 @@ public final class VillageState
 		state.buildingPositions.clear();
 		state.buildingPositions.putAll(buildingPositions);
 		state.resources = resources == null ? new ResourceInventory() : resources;
-		state.gatheringSites.clear();
-		if (gatheringSites == null || gatheringSites.isEmpty())
-		{
-			state.initializeDefaultGathering(lastOfflineProgressAtEpochMillis);
-		}
-		else
+		state.initializeDefaultGathering(lastOfflineProgressAtEpochMillis);
+		if (gatheringSites != null)
 		{
 			state.gatheringSites.putAll(gatheringSites);
 		}
@@ -223,19 +219,19 @@ public final class VillageState
 		return state;
 	}
 
+	/**
+	 * Every gathering site carries production state from the start; whether it produces
+	 * is decided by its building level, which is zero until the player builds it.
+	 */
 	private void initializeDefaultGathering(long timestamp)
 	{
 		gatheringSites.clear();
-		for (GatheringSiteType type : GatheringSiteType.values())
+		for (BuildingType type : BuildingType.values())
 		{
-			int initialLevel = type == GatheringSiteType.RUNE_ESSENCE_SITE ? 0 : 1;
-			gatheringSites.put(type, new GatheringSiteState(
-				type,
-				initialLevel,
-				0,
-				Math.max(0, timestamp),
-				null,
-				initialLevel == 0 ? "Requires Town Hall level 3" : null));
+			if (type.isGatheringSite())
+			{
+				gatheringSites.put(type, GatheringSiteState.idle(type, timestamp));
+			}
 		}
 		if (lastOfflineProgressAtEpochMillis == 0)
 		{
@@ -297,14 +293,19 @@ public final class VillageState
 		return ResourceInventory.from(resources.asMap());
 	}
 
-	public Map<GatheringSiteType, GatheringSiteState> getGatheringSites()
+	public Map<BuildingType, GatheringSiteState> getGatheringSites()
 	{
 		return Collections.unmodifiableMap(new EnumMap<>(gatheringSites));
 	}
 
-	public GatheringSiteState getGatheringSite(GatheringSiteType type)
+	public GatheringSiteState getGatheringSite(BuildingType type)
 	{
 		return gatheringSites.get(type);
+	}
+
+	java.util.Collection<GatheringSiteState> gatheringSiteStates()
+	{
+		return gatheringSites.values();
 	}
 
 	public Map<String, Worker> getWorkers()

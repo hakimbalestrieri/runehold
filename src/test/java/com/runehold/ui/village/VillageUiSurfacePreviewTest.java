@@ -196,6 +196,13 @@ public class VillageUiSurfacePreviewTest
 		}
 
 		@Override
+		public void addGatheringIcon(com.runehold.domain.BuildingType type, JLabel label)
+		{
+			label.setIcon(new VillageResourceIcon(
+				com.runehold.ui.VillageResourceView.Kind.RESOURCES));
+		}
+
+		@Override
 		public void addUpgradeIcon(JButton button)
 		{
 			button.setBackground(new Color(0x4B4841));

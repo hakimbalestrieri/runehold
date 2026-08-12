@@ -5,10 +5,15 @@ import com.runehold.domain.BuildingType;
 import com.runehold.domain.UpgradeResult;
 import com.runehold.domain.Village;
 import com.runehold.domain.VillageState;
+import com.runehold.domain.WorkerState;
+import com.runehold.domain.layout.GridPoint;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Font;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -22,6 +27,8 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class RuneholdViewModelTest
@@ -45,7 +52,8 @@ public class RuneholdViewModelTest
 
 		assertEquals("250 mana", viewModel.getManaText());
 		assertEquals("Today: 0 / 10,000", viewModel.getDailyProgressText());
-		assertEquals(6, viewModel.getBuildings().size());
+		assertEquals(14, viewModel.getBuildings().size());
+		assertEquals(6, viewModel.getStructures().size());
 		assertEquals("Level 1 / 5", viewModel.getBuilding(BuildingType.TOWN_HALL).getLevelText());
 		assertEquals("Not built - Max 5", viewModel.getBuilding(BuildingType.MANA_WELL).getLevelText());
 	}
@@ -105,7 +113,7 @@ public class RuneholdViewModelTest
 
 		RuneholdViewModel viewModel = RuneholdViewModel.from(state, village, catalog);
 
-		assertEquals(6, viewModel.getResources().size());
+		assertEquals(8, viewModel.getResources().size());
 		assertEquals("Capacity",
 			viewModel.getResources().get(1).getTitle());
 		assertTrue(viewModel.getResources().get(1).getValue().contains("mana max"));
@@ -149,8 +157,9 @@ public class RuneholdViewModelTest
 			ignored -> { },
 			new RecordingRuneholdAssets())));
 
-		assertEquals(7, countButtons(panel.get()));
-		assertEquals(5, countEnabledButtons(panel.get()));
+		// One village launcher, six building actions and one place action per gathering
+		// site, since no site has been placed on the map yet.
+		assertEquals(15, countButtons(panel.get()));
 	}
 
 	@Test
@@ -213,8 +222,32 @@ public class RuneholdViewModelTest
 		assertEquals(6, assets.upgradeIconCount);
 		for (BuildingType type : BuildingType.values())
 		{
-			assertEquals(Integer.valueOf(1), assets.buildingIconCounts.get(type));
+			Map<BuildingType, Integer> counts = type.isGatheringSite()
+				? assets.gatheringIconCounts
+				: assets.buildingIconCounts;
+			assertEquals(Integer.valueOf(1), counts.get(type));
 		}
+	}
+
+	@Test
+	public void gatheringIconsUseCanonicalOsrsResourceSprites()
+	{
+		assertEquals(ItemID.IRON_ORE,
+			RuneLiteRuneholdAssets.itemIdFor(BuildingType.MINE));
+		assertEquals(ItemID.RAW_SHRIMP,
+			RuneLiteRuneholdAssets.itemIdFor(BuildingType.FISHING_SPOT));
+		assertEquals(ItemID.LOGS,
+			RuneLiteRuneholdAssets.itemIdFor(BuildingType.WOODCUTTING_GROVE));
+		assertEquals(ItemID.LIMESTONE,
+			RuneLiteRuneholdAssets.itemIdFor(BuildingType.QUARRY));
+		assertEquals(ItemID.POTATO,
+			RuneLiteRuneholdAssets.itemIdFor(BuildingType.FARM));
+		assertEquals(ItemID.GUAM_LEAF,
+			RuneLiteRuneholdAssets.itemIdFor(BuildingType.HERB_PATCH));
+		assertEquals(ItemID.CLAY,
+			RuneLiteRuneholdAssets.itemIdFor(BuildingType.CLAY_PIT));
+		assertEquals(ItemID.BLANKRUNE,
+			RuneLiteRuneholdAssets.itemIdFor(BuildingType.RUNE_ESSENCE_SITE));
 	}
 
 	@Test
@@ -278,6 +311,253 @@ public class RuneholdViewModelTest
 		assertEquals(1, requestCount.get());
 		assertEquals(250L, state.getMana());
 		assertEquals(0, village.levelOf(BuildingType.MANA_WELL));
+	}
+
+	@Test
+	public void gatheringSiteViewsExplainIdleLockedAndProducingSites()
+	{
+		RuneholdViewModel viewModel = RuneholdViewModel.from(state, village, catalog);
+
+		assertEquals(8, viewModel.getGatheringSites().size());
+		// Gathering sites stay in getBuildings() so the village window can place them,
+		// but must not also appear among the side panel's building rows.
+		for (RuneholdViewModel.BuildingView building : viewModel.getStructures())
+		{
+			assertFalse(building.getType().isGatheringSite());
+		}
+		assertNotNull(viewModel.getBuilding(BuildingType.MINE));
+
+		RuneholdViewModel.GatheringSiteView mine =
+			viewModel.getGatheringSite(BuildingType.MINE);
+		assertEquals(RuneholdViewModel.GatheringSiteView.Status.NOT_BUILT, mine.getStatus());
+		assertEquals("Not built", mine.getLevelText());
+		assertEquals("Place it on the map", mine.getWorkersText());
+		assertEquals("Ready to place - 50 mana", mine.getStatusText());
+		assertEquals("Place (50)", mine.getBuildActionText());
+		assertTrue(mine.isBuildEnabled());
+		assertFalse(mine.isBuilt());
+		assertFalse(mine.isAssignEnabled());
+		assertEquals("Not built", mine.getAssignActionText());
+
+		RuneholdViewModel.GatheringSiteView essence =
+			viewModel.getGatheringSite(BuildingType.RUNE_ESSENCE_SITE);
+		assertEquals(RuneholdViewModel.GatheringSiteView.Status.NOT_BUILT, essence.getStatus());
+		assertEquals("Needs Town Hall 3", essence.getStatusText());
+		assertFalse(essence.isBuildEnabled());
+		assertEquals("Locked", essence.getBuildActionText());
+	}
+
+	@Test
+	public void aPlacedSiteWithNoWorkerReportsItselfIdle()
+	{
+		Village timed = new Village(state, catalog, true,
+			Clock.fixed(Instant.parse("2026-08-12T09:00:00Z"), ZoneOffset.UTC));
+		assertTrue(timed.build(BuildingType.MINE, new GridPoint(1, 1)).isSuccess());
+		timed = new Village(state, catalog, true,
+			Clock.fixed(Instant.parse("2026-08-12T09:00:05Z"), ZoneOffset.UTC));
+		assertTrue(timed.completeConstructionIfReady());
+
+		RuneholdViewModel.GatheringSiteView mine = RuneholdViewModel
+			.from(state, timed, catalog)
+			.getGatheringSite(BuildingType.MINE);
+
+		assertTrue(mine.isBuilt());
+		assertEquals(RuneholdViewModel.GatheringSiteView.Status.IDLE, mine.getStatus());
+		assertEquals("No workers assigned", mine.getStatusText());
+		assertEquals("0 / 1 workers", mine.getWorkersText());
+		assertEquals("Level 1 / 4", mine.getLevelText());
+		assertTrue(mine.isAssignEnabled());
+		assertEquals("worker-1", mine.getAssignableWorkerId());
+		assertFalse(mine.isCollectEnabled());
+	}
+
+	@Test
+	public void gatheringSiteViewReportsProductionAndCollectableStorage()
+	{
+		Village timed = new Village(state, catalog, true,
+			Clock.fixed(Instant.parse("2026-08-12T09:00:00Z"), ZoneOffset.UTC));
+		assertTrue(timed.build(BuildingType.MINE, new GridPoint(1, 1)).isSuccess());
+		timed = new Village(state, catalog, true,
+			Clock.fixed(Instant.parse("2026-08-12T09:00:05Z"), ZoneOffset.UTC));
+		assertTrue(timed.completeConstructionIfReady());
+		assertTrue(timed.assignWorker("worker-1", BuildingType.MINE).isSuccess());
+
+		Village later = new Village(state, catalog, true,
+			Clock.fixed(Instant.parse("2026-08-12T09:10:05Z"), ZoneOffset.UTC));
+		RuneholdViewModel viewModel = RuneholdViewModel.from(state, later, catalog);
+		RuneholdViewModel.GatheringSiteView mine =
+			viewModel.getGatheringSite(BuildingType.MINE);
+
+		assertEquals("1 / 1 workers", mine.getWorkersText());
+		assertEquals(30, mine.getStored());
+		assertEquals("30 / 60 ore", mine.getStorageText());
+		assertEquals(RuneholdViewModel.GatheringSiteView.Status.PRODUCING, mine.getStatus());
+		assertEquals("Producing 3 ore / min", mine.getStatusText());
+		assertTrue(mine.isCollectEnabled());
+		assertEquals("Collect 30 ore", mine.getCollectActionText());
+		assertEquals("worker-1", mine.getReleasableWorkerId());
+		assertFalse(mine.isAssignEnabled());
+		assertEquals("Site full", mine.getAssignActionText());
+		assertEquals(0, state.getGatheringSite(BuildingType.MINE).getStoredAmount());
+	}
+
+	@Test
+	public void gatheringSiteViewReportsFullLocalStorage()
+	{
+		Village timed = new Village(state, catalog, true,
+			Clock.fixed(Instant.parse("2026-08-12T09:00:00Z"), ZoneOffset.UTC));
+		assertTrue(timed.build(BuildingType.MINE, new GridPoint(1, 1)).isSuccess());
+		timed = new Village(state, catalog, true,
+			Clock.fixed(Instant.parse("2026-08-12T09:00:05Z"), ZoneOffset.UTC));
+		assertTrue(timed.completeConstructionIfReady());
+		assertTrue(timed.assignWorker("worker-1", BuildingType.MINE).isSuccess());
+
+		Village later = new Village(state, catalog, true,
+			Clock.fixed(Instant.parse("2026-08-12T10:00:05Z"), ZoneOffset.UTC));
+		RuneholdViewModel.GatheringSiteView mine = RuneholdViewModel
+			.from(state, later, catalog)
+			.getGatheringSite(BuildingType.MINE);
+
+		assertEquals(60, mine.getStored());
+		assertEquals(RuneholdViewModel.GatheringSiteView.Status.FULL, mine.getStatus());
+		assertEquals("Storage full - collect", mine.getStatusText());
+		assertTrue(mine.isCollectEnabled());
+	}
+
+	@Test
+	public void anUnplacedSiteOffersPlacementInsteadOfWorkerActions() throws Exception
+	{
+		RuneholdController controller = new RuneholdController(
+			state,
+			village,
+			catalog,
+			ignored -> { });
+		AtomicReference<BuildingType> requested = new AtomicReference<>();
+		AtomicReference<RuneholdPanel> panel = new AtomicReference<>();
+
+		SwingUtilities.invokeAndWait(() ->
+		{
+			panel.set(new RuneholdPanel(
+				controller.getViewModel(),
+				requested::set,
+				() -> { },
+				new RecordingRuneholdAssets()));
+			GatheringRow mineRow = findComponents(panel.get(), GatheringRow.class).get(0);
+			assertNull(findButton(mineRow, "+"));
+			findButton(mineRow, "Place (50)").doClick();
+		});
+
+		assertEquals(BuildingType.MINE, requested.get());
+		assertEquals(0, village.levelOf(BuildingType.MINE));
+	}
+
+	@Test
+	public void panelInvokesReleaseAndCollectWhenTheyAreActuallyAvailable() throws Exception
+	{
+		Village timed = new Village(state, catalog, true,
+			Clock.fixed(Instant.parse("2026-08-12T09:00:00Z"), ZoneOffset.UTC));
+		assertTrue(timed.build(BuildingType.MINE, new GridPoint(1, 1)).isSuccess());
+		timed = new Village(state, catalog, true,
+			Clock.fixed(Instant.parse("2026-08-12T09:00:05Z"), ZoneOffset.UTC));
+		assertTrue(timed.completeConstructionIfReady());
+		assertTrue(timed.assignWorker("worker-1", BuildingType.MINE).isSuccess());
+		Village later = new Village(state, catalog, true,
+			Clock.fixed(Instant.parse("2026-08-12T09:10:05Z"), ZoneOffset.UTC));
+
+		AtomicReference<String> releasedWorker = new AtomicReference<>();
+		AtomicReference<BuildingType> collectedSite = new AtomicReference<>();
+		AtomicReference<RuneholdPanel> panel = new AtomicReference<>();
+
+		SwingUtilities.invokeAndWait(() ->
+		{
+			panel.set(new RuneholdPanel(
+				RuneholdViewModel.from(state, later, catalog),
+				ignored -> { },
+				() -> { },
+				new RecordingGatheringCommands(releasedWorker, collectedSite),
+				new RecordingRuneholdAssets()));
+			GatheringRow mineRow = findComponents(panel.get(), GatheringRow.class).get(0);
+			findButton(mineRow, "-").doClick();
+			findButton(mineRow, "Collect 30 ore").doClick();
+		});
+
+		assertEquals("worker-1", releasedWorker.get());
+		assertEquals(BuildingType.MINE, collectedSite.get());
+	}
+
+	@Test
+	public void panelShowsWhyTheLastCommandWasRefused() throws Exception
+	{
+		RuneholdController controller = new RuneholdController(
+			state,
+			village,
+			catalog,
+			ignored -> { });
+		AtomicReference<RuneholdPanel> panel = new AtomicReference<>();
+
+		SwingUtilities.invokeAndWait(() ->
+		{
+			panel.set(new RuneholdPanel(
+				controller.getViewModel(),
+				ignored -> { },
+				new RecordingRuneholdAssets()));
+			panel.get().refresh(controller.getViewModel(), "Villager 1 is already assigned");
+		});
+
+		assertTrue(containsText(panel.get(), "Villager 1 is already assigned"));
+	}
+
+	private static final class RecordingGatheringCommands
+		implements RuneholdPanel.GatheringCommands
+	{
+		private final AtomicReference<String> releasedWorker;
+		private final AtomicReference<BuildingType> collectedSite;
+
+		private RecordingGatheringCommands(
+			AtomicReference<String> releasedWorker,
+			AtomicReference<BuildingType> collectedSite)
+		{
+			this.releasedWorker = releasedWorker;
+			this.collectedSite = collectedSite;
+		}
+
+		@Override
+		public void assign(String workerId, BuildingType site)
+		{
+		}
+
+		@Override
+		public void release(String workerId)
+		{
+			releasedWorker.set(workerId);
+		}
+
+		@Override
+		public void collect(BuildingType site)
+		{
+			collectedSite.set(site);
+		}
+	}
+
+	private static boolean containsText(Container container, String text)
+	{
+		for (Component component : container.getComponents())
+		{
+			if (component instanceof javax.swing.text.JTextComponent
+				&& text.equals(((javax.swing.text.JTextComponent) component).getText()))
+			{
+				return true;
+			}
+			if (component instanceof JLabel && text.equals(((JLabel) component).getText()))
+			{
+				return true;
+			}
+			if (component instanceof Container && containsText((Container) component, text))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private static int countButtons(Container container)
@@ -372,6 +652,8 @@ public class RuneholdViewModelTest
 		private int upgradeIconCount;
 		private final Map<BuildingType, Integer> buildingIconCounts =
 			new EnumMap<>(BuildingType.class);
+		private final Map<BuildingType, Integer> gatheringIconCounts =
+			new EnumMap<>(BuildingType.class);
 
 		@Override
 		public Font regularFont(float size)
@@ -395,6 +677,12 @@ public class RuneholdViewModelTest
 		public void addBuildingIcon(BuildingType type, JLabel label)
 		{
 			buildingIconCounts.merge(type, 1, Integer::sum);
+		}
+
+		@Override
+		public void addGatheringIcon(BuildingType type, JLabel label)
+		{
+			gatheringIconCounts.merge(type, 1, Integer::sum);
 		}
 
 		@Override

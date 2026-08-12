@@ -2,8 +2,10 @@ package com.runehold;
 
 import com.google.gson.Gson;
 import com.runehold.domain.BuildingCatalog;
+import com.runehold.domain.AssignmentResult;
 import com.runehold.domain.BuildingType;
 import com.runehold.domain.ManaLedger;
+import com.runehold.domain.ResourceCollectResult;
 import com.runehold.domain.Village;
 import com.runehold.domain.VillageState;
 import com.runehold.domain.layout.GridPoint;
@@ -19,6 +21,7 @@ import com.google.inject.Provides;
 import java.awt.image.BufferedImage;
 import java.time.LocalDate;
 import java.util.Objects;
+import java.util.function.Function;
 import javax.inject.Inject;
 import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
@@ -181,10 +184,79 @@ public class RuneholdPlugin extends Plugin
 			loadedController.getViewModel(),
 			type -> requestBuildingAction(loadedController, type),
 			() -> openVillage(loadedController),
+			gatheringCommands(loadedController),
 			uiAssets);
 		controller = loadedController;
 		panel = loadedPanel;
 		replaceNavigation();
+	}
+
+	private RuneholdPanel.GatheringCommands gatheringCommands(RuneholdController source)
+	{
+		return new RuneholdPanel.GatheringCommands()
+		{
+			@Override
+			public void assign(String workerId, BuildingType site)
+			{
+				runGatheringCommand(source, controller ->
+					noticeFor(controller.assignWorker(workerId, site)));
+			}
+
+			@Override
+			public void release(String workerId)
+			{
+				runGatheringCommand(source, controller ->
+					noticeFor(controller.removeWorker(workerId)));
+			}
+
+			@Override
+			public void collect(BuildingType site)
+			{
+				runGatheringCommand(source, controller ->
+					noticeFor(controller.collectGatheringSite(site)));
+			}
+		};
+	}
+
+	static String noticeFor(AssignmentResult result)
+	{
+		return result.isSuccess() ? null : result.getMessage();
+	}
+
+	static String noticeFor(ResourceCollectResult result)
+	{
+		if (result.getCollected() > 0 && !result.isStorageFull())
+		{
+			return null;
+		}
+		if (result.getCollected() == 0 && result.getRemainingAtSite() == 0)
+		{
+			return "Nothing to collect yet.";
+		}
+		return "Village storage is full. "
+			+ result.getRemainingAtSite()
+			+ " "
+			+ result.getResourceType().getDisplayName().toLowerCase(java.util.Locale.US)
+			+ " stayed at the site.";
+	}
+
+	/**
+	 * Runs a gathering command on the client thread and surfaces its refusal, if any, in
+	 * the panel. The command must never fail silently.
+	 */
+	private void runGatheringCommand(
+		RuneholdController source,
+		Function<RuneholdController, String> command)
+	{
+		clientThread.invokeLater(() ->
+		{
+			if (controller != source)
+			{
+				return;
+			}
+			String notice = command.apply(source);
+			refreshPanel(notice);
+		});
 	}
 
 	private void requestBuildingAction(RuneholdController source, BuildingType type)
@@ -213,10 +285,15 @@ public class RuneholdPlugin extends Plugin
 
 	private void refreshPanel()
 	{
+		refreshPanel(null);
+	}
+
+	private void refreshPanel(String notice)
+	{
 		if (controller != null && panel != null)
 		{
 			com.runehold.ui.RuneholdViewModel viewModel = controller.getViewModel();
-			panel.refresh(viewModel);
+			panel.refresh(viewModel, notice);
 			if (villageWindow != null)
 			{
 				villageWindow.updateAnimationSettings(animationSettings());

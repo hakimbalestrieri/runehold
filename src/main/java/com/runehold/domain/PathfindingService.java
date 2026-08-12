@@ -15,12 +15,10 @@ import java.util.Set;
 public final class PathfindingService
 {
 	private final BuildingCatalog buildingCatalog;
-	private final GatheringSiteCatalog siteCatalog;
 
-	public PathfindingService(BuildingCatalog buildingCatalog, GatheringSiteCatalog siteCatalog)
+	public PathfindingService(BuildingCatalog buildingCatalog)
 	{
 		this.buildingCatalog = Objects.requireNonNull(buildingCatalog, "buildingCatalog");
-		this.siteCatalog = Objects.requireNonNull(siteCatalog, "siteCatalog");
 	}
 
 	public boolean hasPath(VillageState state, GridPoint start, GridPoint destination)
@@ -62,6 +60,10 @@ public final class PathfindingService
 		return -1;
 	}
 
+	/**
+	 * Occupancy comes from the single village layout, which now owns gathering-site
+	 * footprints too, so nothing re-derives placement rules here.
+	 */
 	private Set<GridPoint> blockedTiles(VillageState state)
 	{
 		Set<GridPoint> blocked = new HashSet<>();
@@ -72,10 +74,6 @@ public final class PathfindingService
 		{
 			addFootprint(blocked, placement.getPosition(),
 				buildingCatalog.getFootprint(placement.getType()));
-		}
-		for (GatheringSiteDefinition definition : siteCatalog.all().values())
-		{
-			addFootprint(blocked, definition.getPosition(), definition.getFootprint());
 		}
 		return blocked;
 	}

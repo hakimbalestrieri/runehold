@@ -327,6 +327,11 @@ public class VillageCanvasTest
 		}
 
 		@Override
+		public void addGatheringIcon(com.runehold.domain.BuildingType type, JLabel label)
+		{
+		}
+
+		@Override
 		public void addUpgradeIcon(JButton button)
 		{
 		}

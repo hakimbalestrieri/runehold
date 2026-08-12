@@ -39,7 +39,7 @@ public final class Village
 		assignmentService = new AssignmentService(
 			catalog,
 			gatheringCatalog,
-			new PathfindingService(catalog, gatheringCatalog));
+			new PathfindingService(catalog));
 		offlineProgressService = new OfflineProgressService(
 			gatheringCatalog,
 			productionService,
@@ -193,6 +193,12 @@ public final class Village
 		if (result.isSuccess())
 		{
 			state.setBuildingPosition(type, destination);
+			if (type.isGatheringSite())
+			{
+				// The access tiles moved with the site, so the villagers standing on the
+				// old ones are recalled rather than left working a tile that is gone.
+				assignmentService.recallAll(state, type);
+			}
 		}
 		return result;
 	}
@@ -227,6 +233,17 @@ public final class Village
 		{
 			state.setStoredGroveMana(state.getStoredGroveMana(), Instant.now(clock).toEpochMilli());
 		}
+		if (type.isGatheringSite())
+		{
+			// A site that has just been built must not be credited for the time it spent
+			// unbuilt, so its production clock starts at completion.
+			GatheringSiteState site = state.getGatheringSite(type);
+			if (site != null)
+			{
+				site.setUpdatedAtEpochMillis(Instant.now(clock).toEpochMilli());
+				state.putGatheringSite(site);
+			}
+		}
 	}
 
 	public ConstructionJob getConstructionJob()
@@ -257,7 +274,7 @@ public final class Village
 		return new CollectResult(collected);
 	}
 
-	public AssignmentResult assignWorker(String workerId, GatheringSiteType siteType)
+	public AssignmentResult assignWorker(String workerId, BuildingType siteType)
 	{
 		productionService.updateAll(state);
 		return assignmentService.assign(state, workerId, siteType);
@@ -269,7 +286,7 @@ public final class Village
 		return assignmentService.remove(state, workerId);
 	}
 
-	public ResourceCollectResult collectGatheringSite(GatheringSiteType siteType)
+	public ResourceCollectResult collectGatheringSite(BuildingType siteType)
 	{
 		return productionService.collect(state, siteType);
 	}
@@ -314,6 +331,33 @@ public final class Village
 			BuildingType.MANA_GROVE,
 			groveLevel) * intervals;
 		return (int) Math.min(storageCap, state.getStoredGroveMana() + produced);
+	}
+
+	/**
+	 * Projects the amount stored at a gathering site without mutating any state, so
+	 * read-only view models can display live figures between production updates.
+	 */
+	public int peekStoredResource(BuildingType siteType)
+	{
+		GatheringSiteState site = state.getGatheringSite(siteType);
+		if (site == null)
+		{
+			return 0;
+		}
+		int level = state.levelOf(siteType);
+		if (level <= 0 || site.getAssignedWorkerIds().isEmpty())
+		{
+			return site.getStoredAmount();
+		}
+		GatheringSiteDefinition definition = gatheringCatalog.get(siteType);
+		int capacity = definition.storageCapacity(level);
+		long minutes = Math.max(
+			0,
+			(Instant.now(clock).toEpochMilli() - site.getUpdatedAtEpochMillis()) / 60_000L);
+		long produced = (long) definition.productionPerMinute(
+			level,
+			site.getAssignedWorkerIds().size()) * minutes;
+		return (int) Math.min(capacity, site.getStoredAmount() + produced);
 	}
 
 	private void updateGroveProduction()

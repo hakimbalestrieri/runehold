@@ -4,8 +4,9 @@ import com.google.gson.Gson;
 import com.runehold.domain.BuildingCatalog;
 import com.runehold.domain.BuildingType;
 import com.runehold.domain.ConstructionJob;
+import com.runehold.domain.GatheringSiteCatalog;
+import com.runehold.domain.GatheringSiteDefinition;
 import com.runehold.domain.GatheringSiteState;
-import com.runehold.domain.GatheringSiteType;
 import com.runehold.domain.ResourceInventory;
 import com.runehold.domain.ResourceType;
 import com.runehold.domain.VillageState;
@@ -28,6 +29,7 @@ public final class RuneholdStateCodec
 
 	private final Gson gson;
 	private final BuildingCatalog catalog;
+	private final GatheringSiteCatalog siteCatalog = new GatheringSiteCatalog();
 
 	public RuneholdStateCodec(Gson gson, BuildingCatalog catalog)
 	{
@@ -63,11 +65,8 @@ public final class RuneholdStateCodec
 	private VillageState restoreValidated(PersistedRuneholdState persisted)
 	{
 		if (persisted == null
-			|| (persisted.schemaVersion != 1
-				&& persisted.schemaVersion != 2
-				&& persisted.schemaVersion != 3
-				&& persisted.schemaVersion != 4
-				&& persisted.schemaVersion != PersistedRuneholdState.CURRENT_SCHEMA_VERSION)
+			|| persisted.schemaVersion < 1
+			|| persisted.schemaVersion > PersistedRuneholdState.CURRENT_SCHEMA_VERSION
 			|| persisted.manaEarningDate == null
 			|| persisted.xpBaselines == null
 			|| persisted.xpRemainders == null
@@ -84,6 +83,14 @@ public final class RuneholdStateCodec
 			? migrateLegacyPositions(buildingLevels)
 			: validatePositions(persisted.buildingPositions, buildingLevels, job);
 
+		Map<BuildingType, GatheringSiteState> sites = persisted.schemaVersion < 6
+			? null
+			: validateGatheringSites(persisted.gatheringSites, buildingLevels);
+		Map<String, Worker> workers = persisted.schemaVersion < 6
+			? null
+			: validateWorkers(persisted.workers, buildingLevels);
+		crossCheckAssignments(sites, workers);
+
 		return VillageState.restore(
 			persisted.mana,
 			persisted.xpBaselines,
@@ -96,8 +103,11 @@ public final class RuneholdStateCodec
 			persisted.schemaVersion < 4 ? 0 : persisted.storedGroveMana,
 			persisted.schemaVersion < 4 ? 0 : persisted.groveProductionUpdatedAtEpochMillis,
 			persisted.schemaVersion < 5 ? null : validateResources(persisted.resources),
-			persisted.schemaVersion < 5 ? null : validateGatheringSites(persisted.gatheringSites),
-			persisted.schemaVersion < 5 ? null : validateWorkers(persisted.workers),
+			// Before schema 6 a gathering site was a fixed catalog coordinate rather than a
+			// placed building. Those sites are dropped so the player places them on the map;
+			// gathered resources are kept.
+			sites,
+			workers,
 			persisted.schemaVersion < 5 ? 0 : persisted.lastOfflineProgressAtEpochMillis);
 	}
 
@@ -121,58 +131,68 @@ public final class RuneholdStateCodec
 		return ResourceInventory.from(resources);
 	}
 
-	private Map<GatheringSiteType, GatheringSiteState> validateGatheringSites(
-		Map<String, PersistedRuneholdState.PersistedGatheringSite> persistedSites)
+	/**
+	 * Rejects a payload whose sites claim more stock or more villagers than the built
+	 * level allows, so a hand-edited profile cannot inflate production.
+	 */
+	private Map<BuildingType, GatheringSiteState> validateGatheringSites(
+		Map<String, PersistedRuneholdState.PersistedGatheringSite> persistedSites,
+		Map<BuildingType, Integer> buildingLevels)
 	{
 		if (persistedSites == null)
 		{
 			return null;
 		}
-		Map<GatheringSiteType, GatheringSiteState> sites =
-			new EnumMap<>(GatheringSiteType.class);
+		Map<BuildingType, GatheringSiteState> sites = new EnumMap<>(BuildingType.class);
 		for (Map.Entry<String, PersistedRuneholdState.PersistedGatheringSite> entry
 			: persistedSites.entrySet())
 		{
-			GatheringSiteType type = GatheringSiteType.valueOf(entry.getKey());
+			BuildingType type = BuildingType.valueOf(entry.getKey());
+			if (!type.isGatheringSite())
+			{
+				throw new IllegalArgumentException("not a gathering site: " + type);
+			}
 			PersistedRuneholdState.PersistedGatheringSite persisted = entry.getValue();
 			if (persisted == null)
 			{
 				throw new IllegalArgumentException("missing gathering site");
 			}
+			int level = buildingLevels.getOrDefault(type, 0);
+			GatheringSiteDefinition definition = siteCatalog.get(type);
+			if (persisted.storedAmount > definition.storageCapacity(level))
+			{
+				throw new IllegalArgumentException("gathering stock above capacity for " + type);
+			}
+			int assigned = persisted.assignedWorkerIds == null
+				? 0
+				: persisted.assignedWorkerIds.size();
+			if (assigned > definition.maxWorkers(level))
+			{
+				throw new IllegalArgumentException("too many workers at " + type);
+			}
 			sites.put(type, new GatheringSiteState(
 				type,
-				persisted.level,
 				persisted.storedAmount,
 				persisted.updatedAtEpochMillis,
 				persisted.assignedWorkerIds,
 				persisted.blockedReason));
 		}
-		for (GatheringSiteType type : GatheringSiteType.values())
-		{
-			if (!sites.containsKey(type))
-			{
-				sites.put(type, new GatheringSiteState(
-					type,
-					type == GatheringSiteType.RUNE_ESSENCE_SITE ? 0 : 1,
-					0,
-					0,
-					null,
-					type == GatheringSiteType.RUNE_ESSENCE_SITE
-						? "Requires Town Hall level 3" : null));
-			}
-		}
 		return sites;
 	}
 
+	/**
+	 * Cross-checks every worker against the sites that claim it, so a desynchronised
+	 * payload cannot leave phantom villagers producing at a site.
+	 */
 	private Map<String, Worker> validateWorkers(
-		Map<String, PersistedRuneholdState.PersistedWorker> persistedWorkers)
+		Map<String, PersistedRuneholdState.PersistedWorker> persistedWorkers,
+		Map<BuildingType, Integer> buildingLevels)
 	{
 		if (persistedWorkers == null)
 		{
 			return null;
 		}
 		Map<String, Worker> workers = new LinkedHashMap<>();
-		Set<String> assignedWorkerIds = new HashSet<>();
 		for (Map.Entry<String, PersistedRuneholdState.PersistedWorker> entry
 			: persistedWorkers.entrySet())
 		{
@@ -181,12 +201,14 @@ public final class RuneholdStateCodec
 			{
 				throw new IllegalArgumentException("missing worker");
 			}
-			GatheringSiteType assignment = persisted.assignment == null
+			BuildingType assignment = persisted.assignment == null
 				? null
-				: GatheringSiteType.valueOf(persisted.assignment);
-			if (assignment != null && !assignedWorkerIds.add(entry.getKey()))
+				: BuildingType.valueOf(persisted.assignment);
+			if (assignment != null
+				&& (!assignment.isGatheringSite()
+					|| buildingLevels.getOrDefault(assignment, 0) <= 0))
 			{
-				throw new IllegalArgumentException("duplicate worker assignment");
+				throw new IllegalArgumentException("worker assigned to an unbuilt site");
 			}
 			Worker worker = new Worker(
 				entry.getKey(),
@@ -200,6 +222,40 @@ public final class RuneholdStateCodec
 			workers.put(worker.getId(), worker);
 		}
 		return workers;
+	}
+
+	private void crossCheckAssignments(
+		Map<BuildingType, GatheringSiteState> sites,
+		Map<String, Worker> workers)
+	{
+		if (sites == null || workers == null)
+		{
+			return;
+		}
+		Set<String> claimed = new HashSet<>();
+		for (GatheringSiteState site : sites.values())
+		{
+			for (String workerId : site.getAssignedWorkerIds())
+			{
+				Worker worker = workers.get(workerId);
+				if (worker == null || worker.getAssignment() != site.getType())
+				{
+					throw new IllegalArgumentException("unknown worker at " + site.getType());
+				}
+				if (!claimed.add(workerId))
+				{
+					throw new IllegalArgumentException("worker assigned twice: " + workerId);
+				}
+			}
+		}
+		for (Worker worker : workers.values())
+		{
+			if (worker.getAssignment() != null && !claimed.contains(worker.getId()))
+			{
+				throw new IllegalArgumentException(
+					"worker claims a site that does not list it: " + worker.getId());
+			}
+		}
 	}
 
 	private ConstructionJob validateConstructionJob(

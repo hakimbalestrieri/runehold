@@ -37,6 +37,16 @@ public final class OfflineProgressService
 			state,
 			Math.max(0, previous) + cappedMinutes * 60_000L,
 			cappedMinutes);
+		if (cappedMinutes < elapsedMinutes)
+		{
+			// The interval beyond the cap is forfeited. Without this the surplus would
+			// still sit between each site's clock and now, and the next uncapped update
+			// would credit it, making the cap decorative.
+			for (GatheringSiteState site : state.gatheringSiteStates())
+			{
+				site.setUpdatedAtEpochMillis(Math.max(0, nowEpochMillis));
+			}
+		}
 		state.setLastOfflineProgressAtEpochMillis(Math.max(0, nowEpochMillis));
 		return new OfflineProgressSummary(produced, cappedMinutes);
 	}

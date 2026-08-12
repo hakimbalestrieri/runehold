@@ -4,6 +4,7 @@ public enum BuildingCategory
 {
 	CORE("Core"),
 	PRODUCTION("Production"),
+	GATHERING("Gathering"),
 	MILITARY("Military"),
 	UTILITY("Utility"),
 	DECORATION("Decoration");

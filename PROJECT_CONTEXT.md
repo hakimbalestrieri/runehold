@@ -75,7 +75,19 @@ persistence and RuneLite integration before multiplayer or a backend is added.
   capacity, unlimited test mana and versioned layout persistence are implemented.
 - Original packaged building PNGs live under `src/main/resources/village/`; the
   atlas uses nearest-neighbor scaling and cached level variants.
-- The automated suite currently contains 78 passing tests.
+- Gathering sites are ordinary placeable buildings: the player pays mana, waits out
+  the construction and chooses where each site sits on the 18 x 18 map. A single
+  `VillageLayout` owns every footprint, so buildings, sites and pathfinding share
+  one occupancy model.
+- Workers, resource storage, assignment, offline progress and the side-panel
+  gathering rows are implemented and persisted at schema v6. Schema v5 profiles
+  keep their gathered resources but must place their sites again.
+- Gathering sites have no packaged artwork yet; the canvas draws a flat coloured
+  plot per site until the art pass lands.
+- Sprite dimensions and anchors are measured from the artwork by
+  `VillageSpriteAtlas`; the renderer declares none. See
+  `docs/design/runehold-sprite-pipeline.md`.
+- The automated suite currently contains 126 passing tests.
 - The normal Gradle test and build tasks pass locally.
 - The first village-builder domain slice defines an 18 x 18 layout, deterministic
   Town Hall placement, centralized building footprints, collision checks and
@@ -110,6 +122,8 @@ design the multiplayer protocol only after the local interaction is proven.
 - `THIRD_PARTY_NOTICES.md`: asset provenance and Jagex attribution.
 - `.agents/skills/osrs-2007-art-direction`: auto-discovered reusable OSRS visual
   review workflow.
+- `.claude/agents`: repository-scoped reviewer agents (`software-architect`,
+  `ux-ui-reviewer`, `osrs-art-director`, `qa-reviewer`) described in `AGENTS.md`.
 
 ## Non-negotiable RuneLite constraints
 

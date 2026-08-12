@@ -58,6 +58,70 @@ public final class BuildingCatalog
 			new int[]{0, 5},
 			new int[]{0, 25},
 			new int[]{0, 1}));
+		definitions.put(BuildingType.MINE, new Definition(
+			"Mine",
+			"Villagers assigned here gather ore.",
+			BuildingCategory.GATHERING,
+			new Footprint(3, 3),
+			new int[]{0, 60, 300, 1_500, 6_000},
+			new int[]{0, 50, 200, 600, 1_800},
+			new int[]{0, 1, 2, 3, 4}));
+		definitions.put(BuildingType.FISHING_SPOT, new Definition(
+			"Fishing Spot",
+			"Villagers assigned here gather fish.",
+			BuildingCategory.GATHERING,
+			new Footprint(3, 2),
+			new int[]{0, 60, 300, 1_500, 6_000},
+			new int[]{0, 50, 200, 600, 1_800},
+			new int[]{0, 1, 2, 3, 4}));
+		definitions.put(BuildingType.WOODCUTTING_GROVE, new Definition(
+			"Woodcutting Grove",
+			"Villagers assigned here gather logs.",
+			BuildingCategory.GATHERING,
+			new Footprint(3, 3),
+			new int[]{0, 60, 300, 1_500, 6_000},
+			new int[]{0, 50, 200, 600, 1_800},
+			new int[]{0, 1, 2, 3, 4}));
+		definitions.put(BuildingType.QUARRY, new Definition(
+			"Quarry",
+			"Villagers assigned here gather stone.",
+			BuildingCategory.GATHERING,
+			new Footprint(3, 3),
+			new int[]{0, 90, 420, 1_800, 7_200},
+			new int[]{0, 75, 250, 750, 2_200},
+			new int[]{0, 1, 2, 3, 4}));
+		definitions.put(BuildingType.FARM, new Definition(
+			"Farm",
+			"Villagers assigned here gather crops.",
+			BuildingCategory.GATHERING,
+			new Footprint(3, 2),
+			new int[]{0, 90, 420, 1_800, 7_200},
+			new int[]{0, 75, 250, 750, 2_200},
+			new int[]{0, 1, 2, 3, 4}));
+		definitions.put(BuildingType.HERB_PATCH, new Definition(
+			"Herb Patch",
+			"Villagers assigned here gather herbs.",
+			BuildingCategory.GATHERING,
+			new Footprint(2, 2),
+			new int[]{0, 180, 900, 3_600},
+			new int[]{0, 200, 700, 2_000},
+			new int[]{0, 2, 3, 4}));
+		definitions.put(BuildingType.CLAY_PIT, new Definition(
+			"Clay Pit",
+			"Villagers assigned here gather clay.",
+			BuildingCategory.GATHERING,
+			new Footprint(2, 2),
+			new int[]{0, 60, 300, 1_500},
+			new int[]{0, 60, 220, 700},
+			new int[]{0, 1, 2, 3}));
+		definitions.put(BuildingType.RUNE_ESSENCE_SITE, new Definition(
+			"Rune Essence Site",
+			"Villagers assigned here gather rune essence.",
+			BuildingCategory.GATHERING,
+			new Footprint(2, 2),
+			new int[]{0, 300, 1_200, 4_800},
+			new int[]{0, 400, 1_200, 3_000},
+			new int[]{0, 3, 4, 5}));
 	}
 
 	public String getDisplayName(BuildingType type)

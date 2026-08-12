@@ -10,13 +10,46 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import net.runelite.client.ui.PluginPanel;
 
 public final class RuneholdPanel extends PluginPanel
 {
+	/**
+	 * Worker and collection commands issued by the gathering rows. Implementations are
+	 * expected to marshal the work onto RuneLite's client thread.
+	 */
+	public interface GatheringCommands
+	{
+		void assign(String workerId, BuildingType site);
+
+		void release(String workerId);
+
+		void collect(BuildingType site);
+	}
+
+	private static final GatheringCommands NO_GATHERING_COMMANDS = new GatheringCommands()
+	{
+		@Override
+		public void assign(String workerId, BuildingType site)
+		{
+		}
+
+		@Override
+		public void release(String workerId)
+		{
+		}
+
+		@Override
+		public void collect(BuildingType site)
+		{
+		}
+	};
+
 	private final Consumer<BuildingType> onUpgrade;
 	private final Runnable onOpenVillage;
+	private final GatheringCommands gatheringCommands;
 	private final RuneholdAssets assets;
 	private final JPanel content = new JPanel();
 
@@ -34,8 +67,19 @@ public final class RuneholdPanel extends PluginPanel
 		Runnable onOpenVillage,
 		RuneholdAssets assets)
 	{
+		this(initialViewModel, onUpgrade, onOpenVillage, NO_GATHERING_COMMANDS, assets);
+	}
+
+	public RuneholdPanel(
+		RuneholdViewModel initialViewModel,
+		Consumer<BuildingType> onUpgrade,
+		Runnable onOpenVillage,
+		GatheringCommands gatheringCommands,
+		RuneholdAssets assets)
+	{
 		this.onUpgrade = Objects.requireNonNull(onUpgrade, "onUpgrade");
 		this.onOpenVillage = Objects.requireNonNull(onOpenVillage, "onOpenVillage");
+		this.gatheringCommands = Objects.requireNonNull(gatheringCommands, "gatheringCommands");
 		this.assets = Objects.requireNonNull(assets, "assets");
 		setLayout(new BorderLayout());
 		setBackground(RuneholdTheme.BACKGROUND);
@@ -48,27 +92,77 @@ public final class RuneholdPanel extends PluginPanel
 
 	public void refresh(RuneholdViewModel viewModel)
 	{
+		refresh(viewModel, null);
+	}
+
+	/**
+	 * Rebuilds the panel and, when {@code notice} is set, shows why the last command was
+	 * refused. A refused command must never be silent.
+	 */
+	public void refresh(RuneholdViewModel viewModel, String notice)
+	{
 		Objects.requireNonNull(viewModel, "viewModel");
 		if (!SwingUtilities.isEventDispatchThread())
 		{
-			SwingUtilities.invokeLater(() -> refresh(viewModel));
+			SwingUtilities.invokeLater(() -> refresh(viewModel, notice));
 			return;
 		}
 
 		content.removeAll();
 		content.add(createHeader(viewModel));
 		content.add(Box.createVerticalStrut(7));
+		if (notice != null && !notice.trim().isEmpty())
+		{
+			content.add(createNotice(notice));
+			content.add(Box.createVerticalStrut(7));
+		}
 		content.add(createVillageButton());
 		content.add(Box.createVerticalStrut(7));
 
-		for (RuneholdViewModel.BuildingView building : viewModel.getBuildings())
+		for (RuneholdViewModel.BuildingView building : viewModel.getStructures())
 		{
 			content.add(new BuildingRow(building, onUpgrade, assets));
 			content.add(Box.createVerticalStrut(6));
 		}
 
+		content.add(createSectionHeader("GATHERING SITES"));
+		content.add(Box.createVerticalStrut(6));
+		for (RuneholdViewModel.GatheringSiteView site : viewModel.getGatheringSites())
+		{
+			content.add(new GatheringRow(site, gatheringCommands, onUpgrade, assets));
+			content.add(Box.createVerticalStrut(6));
+		}
+
 		content.revalidate();
 		content.repaint();
+	}
+
+	private JTextArea createNotice(String notice)
+	{
+		JTextArea label = new JTextArea(notice);
+		label.setEditable(false);
+		label.setFocusable(false);
+		label.setLineWrap(true);
+		label.setWrapStyleWord(true);
+		label.setOpaque(true);
+		label.setBackground(RuneholdTheme.PANEL);
+		label.setBorder(RuneholdTheme.stoneBorder(6));
+		label.setFont(assets.regularFont(11f));
+		label.setForeground(RuneholdTheme.ERROR);
+		label.setAlignmentX(LEFT_ALIGNMENT);
+		label.getAccessibleContext().setAccessibleName("Last action: " + notice);
+		return label;
+	}
+
+	private JLabel createSectionHeader(String text)
+	{
+		JLabel header = new JLabel(text);
+		RuneholdTheme.styleLabel(header);
+		header.setFont(assets.boldFont(13f));
+		header.setForeground(RuneholdTheme.ORANGE);
+		header.setAlignmentX(LEFT_ALIGNMENT);
+		header.getAccessibleContext().setAccessibleName(text + " section");
+		return header;
 	}
 
 	private JButton createVillageButton()

@@ -3,7 +3,6 @@ package com.runehold.persistence;
 import com.google.gson.Gson;
 import com.runehold.domain.BuildingCatalog;
 import com.runehold.domain.BuildingType;
-import com.runehold.domain.GatheringSiteType;
 import com.runehold.domain.ManaLedger;
 import com.runehold.domain.ResourceType;
 import com.runehold.domain.Village;
@@ -21,6 +20,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public class RuneholdStateCodecTest
 {
@@ -62,18 +62,104 @@ public class RuneholdStateCodecTest
 		VillageState original = VillageState.fresh(TODAY);
 		Village village = new Village(original, new BuildingCatalog(), true,
 			Clock.fixed(Instant.parse("2026-08-11T09:00:00Z"), ZoneOffset.UTC));
-		village.assignWorker("worker-1", GatheringSiteType.MINE);
+		village.build(BuildingType.MINE, new GridPoint(1, 1));
 		village = new Village(original, new BuildingCatalog(), true,
-			Clock.fixed(Instant.parse("2026-08-11T09:10:00Z"), ZoneOffset.UTC));
-		village.collectGatheringSite(GatheringSiteType.MINE);
+			Clock.fixed(Instant.parse("2026-08-11T09:00:05Z"), ZoneOffset.UTC));
+		village.completeConstructionIfReady();
+		village.assignWorker("worker-1", BuildingType.MINE);
+		village = new Village(original, new BuildingCatalog(), true,
+			Clock.fixed(Instant.parse("2026-08-11T09:10:05Z"), ZoneOffset.UTC));
+		village.collectGatheringSite(BuildingType.MINE);
 
 		VillageState restored = codec.decode(codec.encode(original), TODAY);
 
 		assertEquals(30, restored.getResources().get(ResourceType.ORE));
-		assertEquals(GatheringSiteType.MINE, restored.getWorker("worker-1").getAssignment());
+		assertEquals(BuildingType.MINE, restored.getWorker("worker-1").getAssignment());
 		assertEquals(WorkerState.WORKING, restored.getWorker("worker-1").getState());
 		assertEquals(1, restored.getGatheringSite(
-			GatheringSiteType.MINE).getAssignedWorkerIds().size());
+			BuildingType.MINE).getAssignedWorkerIds().size());
+	}
+
+	@Test
+	public void migratesVersionFiveGatheringSitesToUnplacedSites()
+	{
+		String json = "{"
+			+ "\"schemaVersion\":5,"
+			+ "\"mana\":150,"
+			+ "\"manaEarnedToday\":0,"
+			+ "\"manaEarningDate\":\"2026-08-11\","
+			+ "\"xpBaselines\":{},"
+			+ "\"xpRemainders\":{},"
+			+ "\"buildingLevels\":{\"TOWN_HALL\":1},"
+			+ "\"buildingPositions\":{\"TOWN_HALL\":{\"x\":7,\"y\":7}},"
+			+ "\"storedGroveMana\":12,"
+			+ "\"groveProductionUpdatedAtEpochMillis\":1750000000000,"
+			+ "\"resources\":{\"ORE\":420},"
+			+ "\"gatheringSites\":{\"MINE\":{\"level\":2,\"storedAmount\":55,"
+			+ "\"updatedAtEpochMillis\":1750000000000,\"assignedWorkerIds\":[\"worker-1\"]}},"
+			+ "\"workers\":{\"worker-1\":{\"name\":\"Villager 1\",\"state\":\"WORKING\","
+			+ "\"assignment\":\"MINE\",\"position\":{\"x\":4,\"y\":2},\"role\":\"Mine Worker\"}}"
+			+ "}";
+
+		VillageState restored = codec.decode(json, TODAY);
+
+		// Gathered resources survive; the sites themselves must be placed again.
+		assertEquals(150L, restored.getMana());
+		assertEquals(12, restored.getStoredGroveMana());
+		assertEquals(420L, restored.getResources().get(ResourceType.ORE));
+		assertEquals(8, restored.getWorkers().size());
+		assertNull(restored.getWorker("worker-1").getAssignment());
+		for (BuildingType type : BuildingType.values())
+		{
+			if (type.isGatheringSite())
+			{
+				assertEquals(0, restored.levelOf(type));
+				assertNull(restored.positionOf(type));
+				assertEquals(0, restored.getGatheringSite(type).getStoredAmount());
+			}
+		}
+	}
+
+	@Test
+	public void rejectsGatheringStockAboveTheBuiltCapacity()
+	{
+		String json = "{"
+			+ "\"schemaVersion\":6,"
+			+ "\"mana\":150,"
+			+ "\"manaEarnedToday\":0,"
+			+ "\"manaEarningDate\":\"2026-08-11\","
+			+ "\"xpBaselines\":{},"
+			+ "\"xpRemainders\":{},"
+			+ "\"buildingLevels\":{\"TOWN_HALL\":1,\"MINE\":1},"
+			+ "\"buildingPositions\":{\"TOWN_HALL\":{\"x\":7,\"y\":7},"
+			+ "\"MINE\":{\"x\":1,\"y\":1}},"
+			+ "\"gatheringSites\":{\"MINE\":{\"storedAmount\":999999,"
+			+ "\"updatedAtEpochMillis\":0}}"
+			+ "}";
+
+		assertFresh(codec.decode(json, TODAY));
+	}
+
+	@Test
+	public void rejectsASiteClaimingAWorkerThatDoesNotClaimItBack()
+	{
+		String json = "{"
+			+ "\"schemaVersion\":6,"
+			+ "\"mana\":150,"
+			+ "\"manaEarnedToday\":0,"
+			+ "\"manaEarningDate\":\"2026-08-11\","
+			+ "\"xpBaselines\":{},"
+			+ "\"xpRemainders\":{},"
+			+ "\"buildingLevels\":{\"TOWN_HALL\":1,\"MINE\":1},"
+			+ "\"buildingPositions\":{\"TOWN_HALL\":{\"x\":7,\"y\":7},"
+			+ "\"MINE\":{\"x\":1,\"y\":1}},"
+			+ "\"gatheringSites\":{\"MINE\":{\"storedAmount\":0,"
+			+ "\"updatedAtEpochMillis\":0,\"assignedWorkerIds\":[\"ghost\"]}},"
+			+ "\"workers\":{\"worker-1\":{\"name\":\"Villager 1\",\"state\":\"IDLE\","
+			+ "\"position\":{\"x\":6,\"y\":9},\"role\":\"Worker\"}}"
+			+ "}";
+
+		assertFresh(codec.decode(json, TODAY));
 	}
 
 	@Test

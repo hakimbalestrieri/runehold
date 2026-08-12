@@ -23,6 +23,14 @@ RuneLite client supplies these presentation assets at runtime:
 | Mana Well | Water rune sprite | `ItemManager` |
 | Barracks | Bronze sword sprite | `ItemManager` |
 | Workshop and upgrade actions | Hammer sprite | `ItemManager` |
+| Mine gathering site | Iron ore sprite | `ItemManager` |
+| Fishing Spot gathering site | Raw shrimp sprite | `ItemManager` |
+| Woodcutting Grove gathering site | Logs sprite | `ItemManager` |
+| Quarry gathering site | Limestone sprite | `ItemManager` |
+| Farm gathering site | Potato sprite | `ItemManager` |
+| Herb Patch gathering site | Guam leaf sprite | `ItemManager` |
+| Clay Pit gathering site | Clay sprite | `ItemManager` |
+| Rune Essence Site gathering site | Blank rune (rune essence) sprite | `ItemManager` |
 
 The asynchronous images are created from the user's local game cache by the
 RuneLite client. The plugin JAR only contains the code that requests them. The

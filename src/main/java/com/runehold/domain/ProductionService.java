@@ -29,25 +29,29 @@ public final class ProductionService
 	{
 		Objects.requireNonNull(state, "state");
 		Map<ResourceType, Integer> produced = emptyResourceMap();
-		for (GatheringSiteState site : state.getGatheringSites().values())
+		for (GatheringSiteState site : state.gatheringSiteStates())
 		{
-			int amount = updateSite(site, nowEpochMillis, capMinutes);
+			int amount = updateSite(state, site, nowEpochMillis, capMinutes);
 			if (amount > 0)
 			{
 				ResourceType resource = catalog.get(site.getType()).getResourceType();
 				produced.put(resource, produced.get(resource) + amount);
-				state.putGatheringSite(site);
 			}
 		}
 		return produced;
 	}
 
-	private int updateSite(GatheringSiteState site, long nowEpochMillis, long capMinutes)
+	private int updateSite(
+		VillageState state,
+		GatheringSiteState site,
+		long nowEpochMillis,
+		long capMinutes)
 	{
 		GatheringSiteDefinition definition = catalog.get(site.getType());
-		if (site.getLevel() <= 0)
+		int level = state.levelOf(site.getType());
+		if (level <= 0)
 		{
-			site.setBlockedReason("Site locked");
+			site.setBlockedReason("Not built");
 			site.setUpdatedAtEpochMillis(Math.max(site.getUpdatedAtEpochMillis(), nowEpochMillis));
 			return 0;
 		}
@@ -57,7 +61,7 @@ public final class ProductionService
 			site.setUpdatedAtEpochMillis(Math.max(site.getUpdatedAtEpochMillis(), nowEpochMillis));
 			return 0;
 		}
-		int capacity = definition.storageCapacity(site.getLevel());
+		int capacity = definition.storageCapacity(level);
 		if (site.getStoredAmount() >= capacity)
 		{
 			site.setBlockedReason("Local storage full");
@@ -70,18 +74,16 @@ public final class ProductionService
 		{
 			return 0;
 		}
-		int rate = definition.productionPerMinute(
-			site.getLevel(),
-			site.getAssignedWorkerIds().size());
+		int rate = definition.productionPerMinute(level, site.getAssignedWorkerIds().size());
 		int produced = (int) Math.min((long) rate * minutes, capacity - site.getStoredAmount());
 		site.setStoredAmount(site.getStoredAmount() + produced);
+		// The remaining seconds are deliberately carried so short ticks accumulate.
 		site.setUpdatedAtEpochMillis(site.getUpdatedAtEpochMillis() + minutes * 60_000L);
-		site.setBlockedReason(site.getStoredAmount() >= capacity
-			? "Local storage full" : null);
+		site.setBlockedReason(site.getStoredAmount() >= capacity ? "Local storage full" : null);
 		return produced;
 	}
 
-	public ResourceCollectResult collect(VillageState state, GatheringSiteType siteType)
+	public ResourceCollectResult collect(VillageState state, BuildingType siteType)
 	{
 		updateAll(state);
 		GatheringSiteState site = state.getGatheringSite(siteType);

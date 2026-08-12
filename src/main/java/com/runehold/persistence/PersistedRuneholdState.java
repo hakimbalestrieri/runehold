@@ -3,7 +3,6 @@ package com.runehold.persistence;
 import com.runehold.domain.BuildingType;
 import com.runehold.domain.ConstructionJob;
 import com.runehold.domain.GatheringSiteState;
-import com.runehold.domain.GatheringSiteType;
 import com.runehold.domain.ResourceType;
 import com.runehold.domain.VillageState;
 import com.runehold.domain.Worker;
@@ -13,7 +12,7 @@ import java.util.Map;
 
 final class PersistedRuneholdState
 {
-	static final int CURRENT_SCHEMA_VERSION = 5;
+	static final int CURRENT_SCHEMA_VERSION = 6;
 
 	int schemaVersion;
 	long mana;
@@ -76,7 +75,6 @@ final class PersistedRuneholdState
 		for (GatheringSiteState site : state.getGatheringSites().values())
 		{
 			persisted.gatheringSites.put(site.getType().name(), new PersistedGatheringSite(
-				site.getLevel(),
 				site.getStoredAmount(),
 				site.getUpdatedAtEpochMillis(),
 				site.getAssignedWorkerIds(),
@@ -138,7 +136,6 @@ final class PersistedRuneholdState
 
 	static final class PersistedGatheringSite
 	{
-		int level;
 		int storedAmount;
 		long updatedAtEpochMillis;
 		java.util.List<String> assignedWorkerIds;
@@ -149,13 +146,11 @@ final class PersistedRuneholdState
 		}
 
 		private PersistedGatheringSite(
-			int level,
 			int storedAmount,
 			long updatedAtEpochMillis,
 			java.util.List<String> assignedWorkerIds,
 			String blockedReason)
 		{
-			this.level = level;
 			this.storedAmount = storedAmount;
 			this.updatedAtEpochMillis = updatedAtEpochMillis;
 			this.assignedWorkerIds = assignedWorkerIds;
