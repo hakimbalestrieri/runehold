@@ -1,6 +1,6 @@
 # Runehold project context
 
-Last updated: 2026-08-11
+Last updated: 2026-08-12
 
 This file is the handoff document for continuing Runehold from another
 computer or a new AI conversation. Read it together with `AGENTS.md` before
@@ -68,25 +68,29 @@ persistence and RuneLite integration before multiplayer or a backend is added.
 - The RuneLite side panel uses game-native fonts and cache-backed item sprites.
 - The UI uses an original square stone/wood OSRS-style skin.
 - The toolbar lifecycle, profile switching and shutdown cleanup are implemented.
-- The automated suite currently contains 41 passing tests.
+- The automated suite currently contains 52 passing tests.
 - The normal Gradle build and the Plugin Hub `standard` build both pass.
 - The official API recorder reported no disallowed APIs.
+- The first village-builder domain slice defines an 18 x 18 layout, deterministic
+  Town Hall placement, centralized building footprints, collision checks and
+  atomic placement/movement commands.
 
 The user still needs to complete and confirm the logged-in development-client
 checklist in `docs/manual-test-checklist.md`.
 
 ## Not implemented yet
 
-- A dedicated visual village map or bounded placement grid.
-- Drag/place/move controls for buildings.
+- A dedicated visual village canvas (the bounded domain grid is implemented).
+- UI controls for placing and moving buildings.
 - Construction timers, builders or building animations.
 - Troops, defenses, combat simulation or raid replays.
 - Accounts, backend, matchmaking, clans or leaderboards.
 - Any network communication or upload of player information.
 
-The recommended next milestone is the local village canvas and placement model.
-Keep it offline and deterministic; design the multiplayer protocol only after
-the local interaction is proven.
+The recommended next milestone is integrating the layout into versioned village
+state and persistence before building the local isometric canvas. Keep it offline
+and deterministic; design the multiplayer protocol only after the local
+interaction is proven.
 
 ## Architecture map
 

@@ -40,3 +40,14 @@ the user's manual RuneLite launcher confirmation.
   - [ ] User confirms the RuneLite launcher test.
 - [ ] Decide final author string before Plugin Hub submission.
 - [ ] Keep multiplayer/raids/backend work in a separate post-MVP specification.
+
+## Village Builder
+
+- [x] Add the pure 18 x 18 village layout model.
+  - [x] Centralize the four building footprints in the catalog.
+  - [x] Place the initial Town Hall at (7, 7).
+  - [x] Reject out-of-bounds and colliding placements without mutation.
+  - [x] Support atomic building movement while ignoring self-collision.
+- [ ] Integrate layout and construction jobs into versioned village state.
+- [ ] Migrate persisted schema v1 to v2 without losing economy data.
+- [ ] Add the isometric village window, canvas and accessible interactions.
