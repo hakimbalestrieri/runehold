@@ -43,3 +43,18 @@ Runehold follows the official RuneLite example-plugin conventions.
 - Run focused tests, then the full suite and build after each slice.
 - Only the user may perform the final logged-in RuneLite test. Do not automate or
   interact with RuneScape on the user's behalf.
+
+## Memories plugin
+
+This repository also hosts a second, independent plugin, Memories
+(`com.memories.*`, see [MEMORIES.md](MEMORIES.md)). It does not share code,
+configuration, or state with Runehold. The rules above apply to it too
+(Java 11, no reflection/telemetry/network, EDT-only Swing mutation,
+red-green-refactor testing, user-only logged-in verification), with two
+differences specific to its own design:
+
+- Its configuration group is `memories`, stored globally through
+  `ConfigManager` rather than profile-scoped, because a friend's name
+  history does not depend on which of the user's own accounts is logged in.
+- Removing a friend intentionally does not delete their recorded history —
+  that would defeat the plugin's purpose of recognizing them after a rename.

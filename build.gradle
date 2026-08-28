@@ -15,6 +15,7 @@ repositories {
 
 def runeLiteVersion = 'latest.release'
 def pluginMainClass = 'com.runehold.RuneholdPluginTest'
+def memoriesPluginMainClass = 'com.memories.MemoriesPluginTest'
 
 dependencies {
 	compileOnly group: 'net.runelite', name: 'client', version: runeLiteVersion
@@ -38,6 +39,14 @@ tasks.withType(JavaCompile).configureEach {
 tasks.register('run', JavaExec) {
 	classpath = sourceSets.test.runtimeClasspath
 	mainClass = pluginMainClass
+
+	jvmArgs '-ea'
+	args '--developer-mode', '--debug'
+}
+
+tasks.register('runMemories', JavaExec) {
+	classpath = sourceSets.test.runtimeClasspath
+	mainClass = memoriesPluginMainClass
 
 	jvmArgs '-ea'
 	args '--developer-mode', '--debug'

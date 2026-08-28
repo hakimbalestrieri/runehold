@@ -106,6 +106,14 @@ After automated checks pass, complete the
 [manual in-game checklist](docs/manual-test-checklist.md). A passing JVM build is
 not a substitute for user confirmation inside RuneLite.
 
+## Memories plugin
+
+This repository also hosts a second, unrelated RuneLite plugin: **Memories**,
+which remembers the previous names of people on your friends list and adds a
+right-click "Memories" option to view them. It does not share any code,
+configuration, or state with Runehold. See [MEMORIES.md](MEMORIES.md) for
+details, including how it's packaged alongside Runehold in this repository.
+
 ## Post-MVP roadmap
 
 Multiplayer villages, asynchronous raids, matchmaking, defenses, replays, clans,
